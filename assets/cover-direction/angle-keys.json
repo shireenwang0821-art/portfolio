@@ -1,0 +1,988 @@
+{
+  "source": "cober.mp4",
+  "coordinateSystem": "Screen-space bearing: 0° right, 90° down, 180° left, 270° up; clockwise.",
+  "calibration": "Manual visual estimate from all 121 frames and enlarged face sheets. Not measured 3D yaw. Degree values are adjustable estimates, not exact physical ground truth.",
+  "observedSequence": "Camera → up (hold) → upper-right → right → lower-right → down → lower-left → left → upper-left → camera.",
+  "anchor": {
+    "x": 0.515,
+    "y": 0.685,
+    "note": "Stable eye/face center in the neutral frame, normalized source coordinates."
+  },
+  "neutralFrame": 0,
+  "cardinalFrames": {
+    "right": 49,
+    "down": 73,
+    "left": 90,
+    "up": 20
+  },
+  "ANGLE_KEYS": [
+    {
+      "frame": 0,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 0.0,
+      "preferred": true
+    },
+    {
+      "frame": 1,
+      "angle": 270,
+      "strength": 0.06,
+      "direction": "上",
+      "time": 0.041666667,
+      "preferred": false
+    },
+    {
+      "frame": 2,
+      "angle": 270,
+      "strength": 0.12,
+      "direction": "上",
+      "time": 0.083333333,
+      "preferred": false
+    },
+    {
+      "frame": 3,
+      "angle": 270,
+      "strength": 0.19,
+      "direction": "上",
+      "time": 0.125,
+      "preferred": false
+    },
+    {
+      "frame": 4,
+      "angle": 270,
+      "strength": 0.27,
+      "direction": "上",
+      "time": 0.166666667,
+      "preferred": false
+    },
+    {
+      "frame": 5,
+      "angle": 270,
+      "strength": 0.36,
+      "direction": "上",
+      "time": 0.208333333,
+      "preferred": false
+    },
+    {
+      "frame": 6,
+      "angle": 270,
+      "strength": 0.46,
+      "direction": "上",
+      "time": 0.25,
+      "preferred": false
+    },
+    {
+      "frame": 7,
+      "angle": 270,
+      "strength": 0.55,
+      "direction": "上",
+      "time": 0.291666667,
+      "preferred": false
+    },
+    {
+      "frame": 8,
+      "angle": 270,
+      "strength": 0.63,
+      "direction": "上",
+      "time": 0.333333333,
+      "preferred": false
+    },
+    {
+      "frame": 9,
+      "angle": 270,
+      "strength": 0.69,
+      "direction": "上",
+      "time": 0.375,
+      "preferred": false
+    },
+    {
+      "frame": 10,
+      "angle": 270,
+      "strength": 0.75,
+      "direction": "上",
+      "time": 0.416666667,
+      "preferred": false
+    },
+    {
+      "frame": 11,
+      "angle": 270,
+      "strength": 0.8,
+      "direction": "上",
+      "time": 0.458333333,
+      "preferred": false
+    },
+    {
+      "frame": 12,
+      "angle": 270,
+      "strength": 0.85,
+      "direction": "上",
+      "time": 0.5,
+      "preferred": false
+    },
+    {
+      "frame": 13,
+      "angle": 270,
+      "strength": 0.89,
+      "direction": "上",
+      "time": 0.541666667,
+      "preferred": false
+    },
+    {
+      "frame": 14,
+      "angle": 270,
+      "strength": 0.93,
+      "direction": "上",
+      "time": 0.583333333,
+      "preferred": false
+    },
+    {
+      "frame": 15,
+      "angle": 270,
+      "strength": 0.96,
+      "direction": "上",
+      "time": 0.625,
+      "preferred": false
+    },
+    {
+      "frame": 16,
+      "angle": 270,
+      "strength": 0.98,
+      "direction": "上",
+      "time": 0.666666667,
+      "preferred": false
+    },
+    {
+      "frame": 17,
+      "angle": 270,
+      "strength": 0.99,
+      "direction": "上",
+      "time": 0.708333333,
+      "preferred": false
+    },
+    {
+      "frame": 18,
+      "angle": 270,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.75,
+      "preferred": false
+    },
+    {
+      "frame": 19,
+      "angle": 270,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.791666667,
+      "preferred": false
+    },
+    {
+      "frame": 20,
+      "angle": 270,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.833333333,
+      "preferred": true
+    },
+    {
+      "frame": 21,
+      "angle": 271,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.875,
+      "preferred": false
+    },
+    {
+      "frame": 22,
+      "angle": 273,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.916666667,
+      "preferred": false
+    },
+    {
+      "frame": 23,
+      "angle": 276,
+      "strength": 1,
+      "direction": "上",
+      "time": 0.958333333,
+      "preferred": false
+    },
+    {
+      "frame": 24,
+      "angle": 279,
+      "strength": 1,
+      "direction": "上",
+      "time": 1.0,
+      "preferred": false
+    },
+    {
+      "frame": 25,
+      "angle": 282,
+      "strength": 1,
+      "direction": "上",
+      "time": 1.041666667,
+      "preferred": false
+    },
+    {
+      "frame": 26,
+      "angle": 286,
+      "strength": 1,
+      "direction": "上",
+      "time": 1.083333333,
+      "preferred": false
+    },
+    {
+      "frame": 27,
+      "angle": 290,
+      "strength": 1,
+      "direction": "上",
+      "time": 1.125,
+      "preferred": false
+    },
+    {
+      "frame": 28,
+      "angle": 294,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.166666667,
+      "preferred": false
+    },
+    {
+      "frame": 29,
+      "angle": 298,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.208333333,
+      "preferred": false
+    },
+    {
+      "frame": 30,
+      "angle": 301,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.25,
+      "preferred": false
+    },
+    {
+      "frame": 31,
+      "angle": 305,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.291666667,
+      "preferred": false
+    },
+    {
+      "frame": 32,
+      "angle": 308,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.333333333,
+      "preferred": false
+    },
+    {
+      "frame": 33,
+      "angle": 311,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.375,
+      "preferred": false
+    },
+    {
+      "frame": 34,
+      "angle": 314,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.416666667,
+      "preferred": false
+    },
+    {
+      "frame": 35,
+      "angle": 317,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.458333333,
+      "preferred": false
+    },
+    {
+      "frame": 36,
+      "angle": 320,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.5,
+      "preferred": false
+    },
+    {
+      "frame": 37,
+      "angle": 323,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.541666667,
+      "preferred": false
+    },
+    {
+      "frame": 38,
+      "angle": 326,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.583333333,
+      "preferred": false
+    },
+    {
+      "frame": 39,
+      "angle": 329,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.625,
+      "preferred": false
+    },
+    {
+      "frame": 40,
+      "angle": 332,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.666666667,
+      "preferred": false
+    },
+    {
+      "frame": 41,
+      "angle": 335,
+      "strength": 1,
+      "direction": "右上",
+      "time": 1.708333333,
+      "preferred": false
+    },
+    {
+      "frame": 42,
+      "angle": 338,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.75,
+      "preferred": false
+    },
+    {
+      "frame": 43,
+      "angle": 341,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.791666667,
+      "preferred": false
+    },
+    {
+      "frame": 44,
+      "angle": 344,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.833333333,
+      "preferred": false
+    },
+    {
+      "frame": 45,
+      "angle": 347,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.875,
+      "preferred": false
+    },
+    {
+      "frame": 46,
+      "angle": 351,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.916666667,
+      "preferred": false
+    },
+    {
+      "frame": 47,
+      "angle": 354,
+      "strength": 1,
+      "direction": "右",
+      "time": 1.958333333,
+      "preferred": false
+    },
+    {
+      "frame": 48,
+      "angle": 357,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.0,
+      "preferred": false
+    },
+    {
+      "frame": 49,
+      "angle": 0,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.041666667,
+      "preferred": true
+    },
+    {
+      "frame": 50,
+      "angle": 4,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.083333333,
+      "preferred": false
+    },
+    {
+      "frame": 51,
+      "angle": 8,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.125,
+      "preferred": false
+    },
+    {
+      "frame": 52,
+      "angle": 12,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.166666667,
+      "preferred": false
+    },
+    {
+      "frame": 53,
+      "angle": 17,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.208333333,
+      "preferred": false
+    },
+    {
+      "frame": 54,
+      "angle": 22,
+      "strength": 1,
+      "direction": "右",
+      "time": 2.25,
+      "preferred": false
+    },
+    {
+      "frame": 55,
+      "angle": 27,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.291666667,
+      "preferred": false
+    },
+    {
+      "frame": 56,
+      "angle": 32,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.333333333,
+      "preferred": false
+    },
+    {
+      "frame": 57,
+      "angle": 37,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.375,
+      "preferred": false
+    },
+    {
+      "frame": 58,
+      "angle": 41,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.416666667,
+      "preferred": false
+    },
+    {
+      "frame": 59,
+      "angle": 45,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.458333333,
+      "preferred": false
+    },
+    {
+      "frame": 60,
+      "angle": 49,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.5,
+      "preferred": false
+    },
+    {
+      "frame": 61,
+      "angle": 53,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.541666667,
+      "preferred": false
+    },
+    {
+      "frame": 62,
+      "angle": 57,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.583333333,
+      "preferred": false
+    },
+    {
+      "frame": 63,
+      "angle": 61,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.625,
+      "preferred": false
+    },
+    {
+      "frame": 64,
+      "angle": 65,
+      "strength": 1,
+      "direction": "右下",
+      "time": 2.666666667,
+      "preferred": false
+    },
+    {
+      "frame": 65,
+      "angle": 69,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.708333333,
+      "preferred": false
+    },
+    {
+      "frame": 66,
+      "angle": 73,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.75,
+      "preferred": false
+    },
+    {
+      "frame": 67,
+      "angle": 76,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.791666667,
+      "preferred": false
+    },
+    {
+      "frame": 68,
+      "angle": 79,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.833333333,
+      "preferred": false
+    },
+    {
+      "frame": 69,
+      "angle": 82,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.875,
+      "preferred": false
+    },
+    {
+      "frame": 70,
+      "angle": 85,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.916666667,
+      "preferred": false
+    },
+    {
+      "frame": 71,
+      "angle": 87,
+      "strength": 1,
+      "direction": "下",
+      "time": 2.958333333,
+      "preferred": false
+    },
+    {
+      "frame": 72,
+      "angle": 89,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.0,
+      "preferred": false
+    },
+    {
+      "frame": 73,
+      "angle": 90,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.041666667,
+      "preferred": true
+    },
+    {
+      "frame": 74,
+      "angle": 94,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.083333333,
+      "preferred": false
+    },
+    {
+      "frame": 75,
+      "angle": 99,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.125,
+      "preferred": false
+    },
+    {
+      "frame": 76,
+      "angle": 105,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.166666667,
+      "preferred": false
+    },
+    {
+      "frame": 77,
+      "angle": 111,
+      "strength": 1,
+      "direction": "下",
+      "time": 3.208333333,
+      "preferred": false
+    },
+    {
+      "frame": 78,
+      "angle": 117,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.25,
+      "preferred": false
+    },
+    {
+      "frame": 79,
+      "angle": 123,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.291666667,
+      "preferred": false
+    },
+    {
+      "frame": 80,
+      "angle": 129,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.333333333,
+      "preferred": false
+    },
+    {
+      "frame": 81,
+      "angle": 135,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.375,
+      "preferred": false
+    },
+    {
+      "frame": 82,
+      "angle": 142,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.416666667,
+      "preferred": false
+    },
+    {
+      "frame": 83,
+      "angle": 149,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.458333333,
+      "preferred": false
+    },
+    {
+      "frame": 84,
+      "angle": 155,
+      "strength": 1,
+      "direction": "左下",
+      "time": 3.5,
+      "preferred": false
+    },
+    {
+      "frame": 85,
+      "angle": 161,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.541666667,
+      "preferred": false
+    },
+    {
+      "frame": 86,
+      "angle": 166,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.583333333,
+      "preferred": false
+    },
+    {
+      "frame": 87,
+      "angle": 170,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.625,
+      "preferred": false
+    },
+    {
+      "frame": 88,
+      "angle": 174,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.666666667,
+      "preferred": false
+    },
+    {
+      "frame": 89,
+      "angle": 177,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.708333333,
+      "preferred": false
+    },
+    {
+      "frame": 90,
+      "angle": 180,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.75,
+      "preferred": true
+    },
+    {
+      "frame": 91,
+      "angle": 186,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.791666667,
+      "preferred": false
+    },
+    {
+      "frame": 92,
+      "angle": 193,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.833333333,
+      "preferred": false
+    },
+    {
+      "frame": 93,
+      "angle": 200,
+      "strength": 1,
+      "direction": "左",
+      "time": 3.875,
+      "preferred": false
+    },
+    {
+      "frame": 94,
+      "angle": 207,
+      "strength": 1,
+      "direction": "左上",
+      "time": 3.916666667,
+      "preferred": false
+    },
+    {
+      "frame": 95,
+      "angle": 214,
+      "strength": 1,
+      "direction": "左上",
+      "time": 3.958333333,
+      "preferred": false
+    },
+    {
+      "frame": 96,
+      "angle": 220,
+      "strength": 1,
+      "direction": "左上",
+      "time": 4.0,
+      "preferred": false
+    },
+    {
+      "frame": 97,
+      "angle": 226,
+      "strength": 1,
+      "direction": "左上",
+      "time": 4.041666667,
+      "preferred": false
+    },
+    {
+      "frame": 98,
+      "angle": 232,
+      "strength": 1,
+      "direction": "左上",
+      "time": 4.083333333,
+      "preferred": false
+    },
+    {
+      "frame": 99,
+      "angle": 238,
+      "strength": 1,
+      "direction": "左上",
+      "time": 4.125,
+      "preferred": false
+    },
+    {
+      "frame": 100,
+      "angle": 244,
+      "strength": 0.98,
+      "direction": "左上",
+      "time": 4.166666667,
+      "preferred": false
+    },
+    {
+      "frame": 101,
+      "angle": 249,
+      "strength": 0.95,
+      "direction": "上",
+      "time": 4.208333333,
+      "preferred": false
+    },
+    {
+      "frame": 102,
+      "angle": 253,
+      "strength": 0.91,
+      "direction": "上",
+      "time": 4.25,
+      "preferred": false
+    },
+    {
+      "frame": 103,
+      "angle": 257,
+      "strength": 0.86,
+      "direction": "上",
+      "time": 4.291666667,
+      "preferred": false
+    },
+    {
+      "frame": 104,
+      "angle": 260,
+      "strength": 0.8,
+      "direction": "上",
+      "time": 4.333333333,
+      "preferred": false
+    },
+    {
+      "frame": 105,
+      "angle": 263,
+      "strength": 0.73,
+      "direction": "上",
+      "time": 4.375,
+      "preferred": false
+    },
+    {
+      "frame": 106,
+      "angle": 266,
+      "strength": 0.65,
+      "direction": "上",
+      "time": 4.416666667,
+      "preferred": false
+    },
+    {
+      "frame": 107,
+      "angle": 268,
+      "strength": 0.56,
+      "direction": "上",
+      "time": 4.458333333,
+      "preferred": false
+    },
+    {
+      "frame": 108,
+      "angle": 270,
+      "strength": 0.46,
+      "direction": "上",
+      "time": 4.5,
+      "preferred": false
+    },
+    {
+      "frame": 109,
+      "angle": 270,
+      "strength": 0.36,
+      "direction": "上",
+      "time": 4.541666667,
+      "preferred": false
+    },
+    {
+      "frame": 110,
+      "angle": 270,
+      "strength": 0.27,
+      "direction": "上",
+      "time": 4.583333333,
+      "preferred": false
+    },
+    {
+      "frame": 111,
+      "angle": 270,
+      "strength": 0.17,
+      "direction": "上",
+      "time": 4.625,
+      "preferred": false
+    },
+    {
+      "frame": 112,
+      "angle": 270,
+      "strength": 0.08,
+      "direction": "上",
+      "time": 4.666666667,
+      "preferred": false
+    },
+    {
+      "frame": 113,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.708333333,
+      "preferred": false
+    },
+    {
+      "frame": 114,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.75,
+      "preferred": false
+    },
+    {
+      "frame": 115,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.791666667,
+      "preferred": false
+    },
+    {
+      "frame": 116,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.833333333,
+      "preferred": false
+    },
+    {
+      "frame": 117,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.875,
+      "preferred": false
+    },
+    {
+      "frame": 118,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.916666667,
+      "preferred": false
+    },
+    {
+      "frame": 119,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 4.958333333,
+      "preferred": false
+    },
+    {
+      "frame": 120,
+      "angle": null,
+      "strength": 0,
+      "direction": "正视镜头",
+      "time": 5.0,
+      "preferred": false
+    }
+  ]
+}

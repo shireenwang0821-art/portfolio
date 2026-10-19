@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>角色朝向 · 全部 121 帧</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #eeeef2; color: #30313c; font: 16px/1.6 "PingFang SC", "Microsoft YaHei", sans-serif; }
+    main { max-width: 1600px; margin: auto; padding: 56px 5vw 80px; }
+    h1 { margin: 0; font-size: 32px; font-weight: 500; }
+    p { max-width: 900px; }
+    a { color: inherit; text-underline-offset: 4px; }
+    nav { display: flex; flex-wrap: wrap; gap: 12px 28px; margin: 24px 0; }
+    #stats { font-variant-numeric: tabular-nums; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 16px; margin-top: 32px; }
+    .frame { padding: 0 0 12px; overflow: hidden; text-align: left; border: 1px solid #d4d5de; border-radius: 12px; background: #fafafa; color: inherit; font: inherit; cursor: pointer; }
+    .frame__image { display: block; height: 160px; overflow: hidden; background: #e7e7ed; }
+    .frame img { width: 100%; height: 100%; object-fit: cover; }
+    .frame span:not(.frame__image) { display: block; padding: 4px 14px 0; font-variant-numeric: tabular-nums; }
+    .frame small { color: #6a6b7b; font-size: 13px; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #666b99; outline-offset: 4px; }
+    dialog { width: min(1100px, 92vw); padding: 20px; border: 0; border-radius: 16px; color: inherit; background: #fafafa; }
+    dialog::backdrop { background: #101321b8; }
+    dialog img { display: block; width: 100%; height: auto; }
+    dialog footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding-top: 16px; }
+    dialog button { padding: 8px 18px; border: 1px solid #bbbcc7; border-radius: 8px; background: white; color: inherit; font: inherit; cursor: pointer; }
+    #loadError { color: #a22; }
+    @media (max-width: 760px) and (orientation: portrait) {
+      main { padding: max(min(70px, 9.2105vw), env(safe-area-inset-top)) min(70px, 9.2105vw) calc(min(80px, 10.5263vw) + env(safe-area-inset-bottom)); }
+      h1 { font-size: 28px; } body { font-size: 32px; }
+      .grid { grid-template-columns: minmax(0, 1fr); gap: min(80px, 10.5263vw); }
+      .frame small { font-size: 32px; }
+      .frame__image { height: 220px; }
+      nav { display: grid; overflow-wrap: anywhere; }
+      dialog { max-height: 90dvh; overflow-y: auto; font-size: 32px; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>角色朝向 · 全部 121 帧</h1>
+  <p>屏幕方向角：右 0° · 下 90° · 左 180° · 上 270°。按原始顺序展示全部帧，点击查看完整画面。</p>
+  <p>角度由逐帧观察头部姿态与瞳孔方向进行视觉校准，属于可调估计值，并非精确三维旋转测量。开头抬头停留和结尾回正均保留，不按时间或帧号均分 360°。</p>
+  <p id="stats">正在读取提取结果…</p>
+  <nav>
+    <a href="../index-scroll-responsive.html#projectClosure">查看鼠标跟随效果</a>
+    <a href="../assets/cover-direction/angle-keys.json" download>下载 ANGLE_KEYS 配置</a>
+    <a href="../assets/cover-direction/manifest.json" download>下载帧信息与压缩报告</a>
+  </nav>
+  <nav id="sheets" aria-label="全部帧联系表"></nav>
+  <p id="loadError" hidden>加载失败，请刷新重试。</p>
+  <div class="grid" id="frames" aria-label="全部帧，按原始帧号排列"></div>
+</main>
+<dialog id="inspector" aria-label="完整帧预览">
+  <img id="fullFrame" alt="角色完整画面" />
+  <footer><span id="frameInfo"></span><button type="button" id="closeInspector">关闭</button></footer>
+</dialog>
+<script type="module">
+  const base = new URL("../assets/cover-direction/", location.href);
+  try {
+    const [manifest, mapping] = await Promise.all([
+      fetch(new URL("manifest.json", base)).then(r => { if (!r.ok) throw Error(r.status); return r.json(); }),
+      fetch(new URL("angle-keys.json", base)).then(r => { if (!r.ok) throw Error(r.status); return r.json(); }),
+    ]);
+    const mb = bytes => (bytes / 1e6).toFixed(2);
+    document.querySelector("#stats").textContent = `${manifest.frameCount} 帧 / ${manifest.fps} fps / ${manifest.duration.toFixed(2)} 秒。桌面与手机共用原始 ${manifest.sourceSize.join("×")} 高清帧，合计 ${mb(manifest.desktopBytes)} MB。点击查看高清完整帧。`;
+    const sheets = document.querySelector("#sheets");
+    manifest.contactSheets.forEach((file, index) => {
+      const link = document.createElement("a");
+      link.href = new URL(`previews/${file}`, base);
+      link.target = "_blank"; link.rel = "noopener";
+      link.textContent = `联系表 ${index + 1}`;
+      sheets.append(link);
+    });
+    const inspector = document.querySelector("#inspector");
+    const fragment = document.createDocumentFragment();
+    for (const key of mapping.ANGLE_KEYS) {
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "frame";
+      const number = String(key.frame).padStart(4, "0");
+      const bearing = key.angle === null ? "正视镜头" : `${key.direction} ≈${key.angle}°`;
+      const info = `#${String(key.frame).padStart(3, "0")} · ${key.time.toFixed(3)}s · ${bearing}`;
+      button.setAttribute("aria-label", info);
+      button.innerHTML = `<span class="frame__image"><img src="${new URL(`thumbs/frame-${number}.webp?v=20261018-native95`, base)}" loading="lazy" decoding="async" width="512" height="512" alt="" /></span><span>${info}</span><span><small>转向强度 ${key.strength.toFixed(2)}</small></span>`;
+      button.addEventListener("click", () => {
+        document.querySelector("#fullFrame").src = new URL(`frames/frame-${number}.webp?v=20261018-native95`, base);
+        document.querySelector("#frameInfo").textContent = info;
+        inspector.showModal();
+      });
+      fragment.append(button);
+    }
+    document.querySelector("#frames").append(fragment);
+    document.querySelector("#closeInspector").addEventListener("click", () => inspector.close());
+    inspector.addEventListener("click", event => { if (event.target === inspector) inspector.close(); });
+  } catch (error) {
+    document.querySelector("#loadError").hidden = false;
+    console.error(error);
+  }
+</script>
+</body>
+</html>

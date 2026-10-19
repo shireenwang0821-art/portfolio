@@ -1,0 +1,4387 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI 识屏完整交互 Demo</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #151515;
+        --muted: #666;
+        --paper: #fff;
+        --panel: #f5f5f5;
+        --accent: #fe2542;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: transparent;
+      }
+
+      body {
+        margin: 0;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        padding: 0;
+        background: transparent;
+        color: var(--ink);
+        font-family: "HYQiHei", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .stage {
+        --stage-scale: min(calc(100vw / 949px), calc(100dvh / 870px), 1);
+        position: relative;
+        width: calc(949px * var(--stage-scale));
+        height: calc(870px * var(--stage-scale));
+        flex: 0 0 auto;
+      }
+
+      .stage::before {
+        content: none;
+      }
+
+      body.is-touch-cursor-active,
+      body.is-touch-cursor-active * {
+        cursor: none !important;
+      }
+
+      .device {
+        position: relative;
+        width: 949px;
+        height: 870px;
+        border: 8px solid #2b2b2b;
+        border-radius: 44px;
+        background: #2b2b2b;
+        box-shadow: 0 14px 34px rgba(126, 105, 72, 0.13), 0 36px 70px rgba(126, 105, 72, 0.06);
+        transform: scale(var(--stage-scale));
+        transform-origin: top left;
+      }
+
+      .device-shell-highlight {
+        position: absolute;
+        inset: 0;
+        border-radius: 36px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+        pointer-events: none;
+      }
+
+      .touch-cursor {
+        position: fixed;
+        left: 0;
+        top: 0;
+        z-index: 200;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(-50%, -50%, 0) scale(0.92);
+        transition: opacity 120ms ease, transform 120ms ease;
+        will-change: transform, opacity;
+      }
+
+      .touch-cursor::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: rgba(205, 211, 219, 0.7);
+        box-shadow:
+          0 8px 22px rgba(35, 45, 58, 0.18),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+      }
+
+      .touch-cursor::after {
+        content: "";
+        position: absolute;
+        inset: 12px;
+        border-radius: inherit;
+        background: rgba(245, 247, 250, 0.82);
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+      }
+
+      .touch-cursor.is-visible {
+        opacity: 1;
+      }
+
+      .touch-cursor.is-pressed {
+        transform: translate3d(-50%, -50%, 0) scale(0.78);
+      }
+
+      .touch-cursor.is-pressed::before {
+        animation: touchRipple 420ms ease-out;
+      }
+
+      @keyframes touchRipple {
+        0% {
+          box-shadow:
+            0 8px 22px rgba(35, 45, 58, 0.18),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+            0 0 0 0 rgba(185, 194, 205, 0.45);
+        }
+        100% {
+          box-shadow:
+            0 8px 22px rgba(35, 45, 58, 0.18),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+            0 0 0 18px rgba(185, 194, 205, 0);
+        }
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 34px;
+        background: var(--panel);
+        isolation: isolate;
+      }
+
+      .ripple-canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 20;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        opacity: 0;
+        pointer-events: none;
+        transition: none;
+      }
+
+      .screen.is-rippling .ripple-canvas {
+        opacity: 1;
+      }
+
+      .side-ai-key {
+        position: absolute;
+        top: 128px;
+        right: -17px;
+        z-index: 4;
+        width: 7px;
+        height: 61px;
+        min-width: 0;
+        padding: 0;
+        border: 0;
+        border-radius: 0 6px 6px 0;
+        background: #2b2b2b;
+        box-shadow: none;
+        cursor: pointer;
+        appearance: none;
+      }
+
+      .side-ai-key::after {
+        content: none;
+      }
+
+      .side-ai-key::before {
+        content: "";
+        position: absolute;
+        inset: -24px -14px -24px -20px;
+        background: transparent;
+      }
+
+      .device.is-awake .side-ai-key {
+        background: #ddd;
+      }
+
+      .side-ai-key:hover,
+      .device.is-awake .side-ai-key:hover {
+        background: #3b83f7;
+      }
+
+      .status-bar {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 8;
+        width: 946px;
+        height: 40px;
+        pointer-events: none;
+      }
+
+      .status-bar img {
+        display: block;
+        width: 946px;
+        height: 40px;
+        object-fit: contain;
+      }
+
+      .gallery {
+        position: absolute;
+        left: 16px;
+        top: 40px;
+        width: 484px;
+        height: 780px;
+        overflow: hidden;
+        border-radius: 16px;
+        background: #d9e1e7;
+        touch-action: pan-y;
+      }
+
+      .slides {
+        height: 100%;
+        display: flex;
+        transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+        will-change: transform;
+      }
+
+      .slides img {
+        flex: 0 0 100%;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .slide-dots {
+        position: absolute;
+        left: 50%;
+        bottom: 8px;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        transform: translateX(-50%);
+      }
+
+      .slide-dots button {
+        width: 8px;
+        height: 8px;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.72);
+        cursor: pointer;
+      }
+
+      .slide-dots button.is-active {
+        width: 22px;
+        border-radius: 999px;
+        background: var(--accent);
+      }
+
+      .article {
+        position: absolute;
+        top: 40px;
+        right: 16px;
+        width: 402px;
+        height: 786px;
+        overflow: hidden;
+        border-radius: 16px;
+        background: var(--paper);
+      }
+
+      .author-bar {
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 4;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .avatar {
+        flex: 0 0 auto;
+        width: 45px;
+        height: 45px;
+        overflow: hidden;
+        border-radius: 50%;
+        background: #d8c3a0;
+      }
+
+      .avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .author-name {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        color: #000;
+        font-size: 18px;
+        font-weight: 800;
+        line-height: 20px;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+
+      .follow-button {
+        flex: 0 0 auto;
+        height: 34px;
+        min-width: 81px;
+        padding: 0 23px;
+        border: 1px solid var(--accent);
+        border-radius: 20px;
+        background: #fff;
+        color: var(--accent);
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .share-button {
+        flex: 0 0 auto;
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #5b5b5b;
+      }
+
+      .share-button svg {
+        width: 26px;
+        height: 26px;
+      }
+
+      .article-scroll {
+        height: 100%;
+        overflow-y: auto;
+        padding: 82px 24px 100px;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .article-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      h1,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        color: #151515;
+        font-size: 22px;
+        font-weight: 800;
+        line-height: 26px;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        margin-top: 12px;
+        color: #151515;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 30px;
+        letter-spacing: 0;
+      }
+
+      .body-copy {
+        margin-top: 12px;
+        color: #151515;
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 30px;
+        letter-spacing: 0;
+        white-space: pre-line;
+      }
+
+      .bottom-bar {
+        position: absolute;
+        left: 11px;
+        right: 17px;
+        bottom: 0;
+        z-index: 5;
+        height: 73px;
+        padding: 8px 11px 18px;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 24%, #fff 100%);
+      }
+
+      .bottom-shell {
+        height: 55px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 0 10px;
+        border: 1px solid rgba(255, 255, 255, 0.9);
+        border-radius: 30px;
+        background: linear-gradient(180deg, rgba(248, 248, 248, 0.6), rgba(255, 255, 255, 0.92));
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        backdrop-filter: blur(16px);
+      }
+
+      .comment-input {
+        flex: 1 1 auto;
+        min-width: 0;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 14px;
+        border: 0;
+        border-radius: 30px;
+        background: rgba(229, 229, 229, 0.68);
+        color: #777;
+        font-size: 16px;
+        font-weight: 500;
+      }
+
+      .action-counts {
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        color: #222;
+        font-size: 17px;
+        font-weight: 600;
+      }
+
+      .action-counts span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        white-space: nowrap;
+      }
+
+      .action-counts svg,
+      .comment-input svg {
+        width: 24px;
+        height: 24px;
+        stroke-width: 1.9;
+      }
+
+      .comment-input svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .dynamic-island {
+        position: absolute;
+        left: 449px;
+        top: 10px;
+        z-index: 25;
+        width: 120px;
+        height: 95px;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform-origin: 50% 32%;
+        will-change: transform, opacity, filter;
+      }
+
+      .dynamic-island__glass {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 48% 52% 47% 53% / 52% 52% 48% 48%;
+        background:
+          radial-gradient(95px 52px at 50% 37%, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.16) 55%, rgba(255, 255, 255, 0) 74%),
+          radial-gradient(90px 58px at 47% 9%, rgba(0, 0, 0, 0.98), rgba(0, 0, 0, 0.83) 49%, rgba(0, 0, 0, 0.05) 72%),
+          radial-gradient(95px 55px at 48% 66%, rgba(245, 251, 255, 0.66), rgba(225, 242, 250, 0.36) 55%, rgba(255, 255, 255, 0.08) 78%);
+        box-shadow:
+          inset 0 2px 8px rgba(255, 255, 255, 0.8),
+          inset 0 -8px 22px rgba(255, 255, 255, 0.46),
+          inset 0 9px 18px rgba(0, 0, 0, 0.66),
+          0 10px 20px rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(7px) saturate(1.28) brightness(1.08);
+      }
+
+      .dynamic-island__glass::before,
+      .dynamic-island__glass::after {
+        content: "";
+        position: absolute;
+        inset: 13px 8px 18px;
+        border-radius: 50%;
+        pointer-events: none;
+      }
+
+      .dynamic-island__glass::before {
+        background: linear-gradient(92deg, rgba(67, 201, 255, 0), rgba(73, 228, 255, 0.62), rgba(255, 64, 188, 0.82), rgba(255, 255, 255, 0));
+        filter: blur(6px);
+        opacity: 0.9;
+        transform: translateY(34px) rotate(-3deg);
+      }
+
+      .dynamic-island__glass::after {
+        border: 1px solid rgba(255, 255, 255, 0.36);
+        box-shadow: inset 0 0 16px rgba(255, 255, 255, 0.5);
+      }
+
+      .dynamic-island__canvas {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        display: block;
+        width: 100%;
+        height: 100%;
+        mix-blend-mode: screen;
+      }
+
+      .dynamic-island__avatars {
+        position: absolute;
+        right: -8px;
+        bottom: 17px;
+        z-index: 3;
+        display: flex;
+        align-items: center;
+      }
+
+      .dynamic-island__avatar {
+        width: 32px;
+        height: 32px;
+        overflow: hidden;
+        border: 2px solid rgba(255, 255, 255, 0.92);
+        border-radius: 50%;
+        background: #d8c3a0;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+      }
+
+      .dynamic-island__avatar + .dynamic-island__avatar {
+        margin-left: -13px;
+      }
+
+      .dynamic-island__avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .gesture-layer {
+        position: absolute;
+        left: 16px;
+        top: 40px;
+        z-index: 21;
+        width: 484px;
+        height: 780px;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .text-gesture-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 30;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+        pointer-events: none;
+      }
+
+      .gesture-lasso {
+        fill: none;
+        stroke: #3b83f7;
+        stroke-width: 6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        filter:
+          drop-shadow(0 0 9px rgba(36, 131, 255, 0.52))
+          drop-shadow(0 0 18px rgba(121, 206, 255, 0.22));
+      }
+
+      .screen.is-drawing .gesture-lasso {
+        opacity: 1;
+      }
+
+      .text-gesture-lasso {
+        fill: none;
+        stroke: rgba(48, 135, 255, 0.96);
+        stroke-width: 7;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        filter: drop-shadow(0 0 8px rgba(50, 136, 255, 0.38));
+      }
+
+      .screen.is-text-drawing .text-gesture-lasso,
+      .screen.is-star-drawing .save-star-path {
+        opacity: 1;
+      }
+
+      .save-star-path {
+        fill: none;
+        stroke: #3b83f7;
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        filter: none;
+      }
+
+      .quran-target {
+        position: relative;
+        border-radius: 4px;
+      }
+
+      .quran-selection-frame {
+        position: absolute;
+        z-index: 34;
+        width: 0;
+        height: 0;
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(0.96);
+        transform-origin: 50% 50%;
+        pointer-events: none;
+        background: url("./assets/quran-selection-frame-upload.png") center / 100% 100% no-repeat;
+        filter: none;
+        transition:
+          opacity 220ms ease,
+          visibility 220ms ease,
+          transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .quran-selection-frame.is-visible {
+        opacity: 1;
+        visibility: visible;
+        transform: scale(1);
+      }
+
+      .quran-listening-ui {
+        --quran-control-left: 536px;
+        --quran-recommend-top: 402px;
+        position: absolute;
+        inset: 0;
+        z-index: 32;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        overflow: hidden;
+        /* The listening overlay has its own backdrop-filter and halo bitmap.
+           Give that composited layer the exact screen contour as well, so its
+           lower glow cannot square off or bleed over the mockup corners. */
+        border-radius: inherit;
+        clip-path: inset(0 round 34px);
+        isolation: isolate;
+        transition:
+          opacity 220ms ease,
+          visibility 220ms ease;
+      }
+
+      /* 文字圈选时，利用超大扩散阴影把页面其余区域压暗，圈选文本保持镂空。 */
+      .quran-selection-scrim {
+        position: absolute;
+        z-index: 0;
+        border-radius: 4px;
+        background: transparent;
+        box-shadow: 0 0 0 100vmax rgb(69 69 69 / 10%);
+        pointer-events: none;
+      }
+
+      .quran-listening-frost,
+      .quran-listening-halo,
+      .quran-listening-light {
+        position: absolute;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      .quran-listening-frost {
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 224px;
+        z-index: -1;
+        background: rgba(255, 255, 255, 0.01);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        /* Spread the blur transition over the whole listening layer so it
+           dissolves into the page instead of creating a hard top edge. */
+        -webkit-mask-image: linear-gradient(
+          to bottom,
+          transparent 0,
+          rgba(0, 0, 0, 0.06) 24px,
+          rgba(0, 0, 0, 0.24) 64px,
+          rgba(0, 0, 0, 0.56) 124px,
+          rgba(0, 0, 0, 0.86) 176px,
+          #000 100%
+        );
+        mask-image: linear-gradient(
+          to bottom,
+          transparent 0,
+          rgba(0, 0, 0, 0.06) 24px,
+          rgba(0, 0, 0, 0.24) 64px,
+          rgba(0, 0, 0, 0.56) 124px,
+          rgba(0, 0, 0, 0.86) 176px,
+          #000 100%
+        );
+      }
+
+      .quran-listening-halo {
+        display: block;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        max-width: none;
+        object-fit: contain;
+        z-index: 2;
+      }
+
+      .quran-listening-light {
+        z-index: 3;
+        bottom: 0;
+        left: 50%;
+        width: 380px;
+        height: 14px;
+        border-radius: 999px;
+        background: radial-gradient(ellipse at center, rgba(255,255,255,1) 0%, rgba(255,255,255,0.88) 32%, rgba(255,255,255,0.24) 64%, rgba(255,255,255,0) 82%);
+        filter: blur(4px);
+        opacity: 0.96;
+        box-shadow: 0 0 18px rgba(255,255,255,0.76);
+        animation: quranListeningLight 3.2s ease-in-out infinite alternate;
+      }
+
+      .quran-listening-light-entrance {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
+
+      .quran-listening-ui.is-visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+
+      .quran-recommendations {
+        position: absolute;
+        left: var(--quran-control-left);
+        top: var(--quran-recommend-top);
+        display: flex;
+        gap: 12px;
+        width: max-content;
+        max-width: calc(100% - var(--quran-control-left) - 16px);
+        z-index: 4;
+        transform: translateY(8px) scale(0.97);
+        transform-origin: left bottom;
+        transition: transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .quran-listening-ui.is-visible .quran-recommendations {
+        transform: translateY(0) scale(1);
+      }
+
+      .quran-recommendation,
+      .quran-action-button,
+      .quran-listening-close,
+      .quran-keyboard-button {
+        appearance: none;
+        border: 0;
+        font: inherit;
+        color: #202126;
+        cursor: pointer;
+      }
+
+      .quran-recommendation {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        white-space: nowrap;
+        font-size: 15px;
+        font-weight: 400;
+        letter-spacing: 0;
+        transition: transform 160ms ease, background 160ms ease;
+      }
+
+      .quran-recommendation:nth-child(1) { width: 96px; }
+      .quran-recommendation:nth-child(2) { width: 66px; }
+      .quran-recommendation:nth-child(3) { width: 186px; }
+
+      .quran-recommendation:focus-visible {
+        outline: none;
+        background: rgba(255, 255, 255, 0.96);
+      }
+
+      .quran-recommendation--primary {
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+      }
+
+      .quran-toolbar {
+        position: absolute;
+        left: var(--quran-control-left);
+        top: calc(var(--quran-recommend-top) + 57px);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: max-content;
+        height: 48px;
+        box-sizing: border-box;
+        padding: 0 12px 0 5px;
+        border: 0;
+        border-radius: 85px;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.16);
+        z-index: 4;
+        transform: translateY(10px) scale(0.97);
+        transform-origin: left top;
+        transition: transform 420ms 40ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .quran-listening-ui.is-visible .quran-toolbar {
+        transform: translateY(0) scale(1);
+      }
+
+      .quran-ask-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        box-sizing: border-box;
+        padding: 6px 14px 6px 6px;
+        border: 0;
+        border-radius: 100px;
+        background: rgba(181, 159, 255, 0.12);
+        color: #18181b;
+        font: inherit;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 1;
+        white-space: nowrap;
+      }
+
+      .quran-voice-orb {
+        width: 28px;
+        height: 28px;
+        display: block;
+        flex: 0 0 28px;
+      }
+
+      .quran-toolbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .quran-action-button {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+        place-items: center;
+        border-radius: 50%;
+        background: transparent;
+      }
+
+      .quran-action-button:focus-visible,
+      .quran-ask-button:focus-visible {
+        outline: none;
+        background: rgba(234, 237, 251, 0.92);
+      }
+
+      .quran-action-button img {
+        display: block;
+        max-width: 36px;
+        max-height: 36px;
+      }
+
+      .quran-listening-controls {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 108px;
+        padding: 30px 114px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        z-index: 5;
+        transform: translateY(10px);
+        transition: transform 420ms 80ms cubic-bezier(0.22, 1, 0.36, 1);
+        will-change: transform, opacity;
+      }
+
+      .quran-listening-controls > span {
+        position: absolute;
+        top: 40px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: none;
+        -webkit-text-fill-color: #fff;
+        color: #fff;
+        font-size: 18px;
+        font-weight: 500;
+        line-height: 22px;
+        letter-spacing: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+      }
+
+      .quran-listening-ui.is-visible .quran-listening-controls {
+        transform: translateY(0);
+      }
+
+      .quran-listening-close,
+      .quran-keyboard-button {
+        position: relative;
+        display: grid;
+        place-items: center;
+        width: 48px;
+        height: 48px;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 85px;
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+
+      .quran-listening-close { left: auto; }
+      .quran-keyboard-button { right: auto; }
+
+      .quran-listening-close img {
+        display: block;
+        width: 12px;
+        height: 12px;
+      }
+
+      .quran-keyboard-button img {
+        display: block;
+        width: 24px;
+        height: 24px;
+      }
+
+      .screen.is-quran-listening .ai-companion {
+        opacity: 0;
+        visibility: hidden;
+        transform: translate(-50%, 16px) scale(0.94);
+        pointer-events: none;
+      }
+
+      /* 语音问答沿用收音层，只保留 Figma 中的全屏雾化、底部声波与控制区。 */
+      .screen.is-voice-question .quran-recommendations,
+      .screen.is-voice-question .quran-toolbar {
+        display: none;
+      }
+
+      .screen.is-voice-question .quran-listening-controls > span {
+        max-width: 620px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 400;
+      }
+
+      .screen.is-voice-question .quran-listening-light {
+        animation-duration: 1.8s;
+        animation-timing-function: ease-in-out;
+        box-shadow: 0 0 24px rgba(255, 255, 255, 0.88);
+      }
+
+      @keyframes quranListeningLight {
+        0% { transform: translateX(-58%) scaleX(0.76); opacity: 0.48; }
+        50% { transform: translateX(-50%) scaleX(1); opacity: 0.95; }
+        100% { transform: translateX(-42%) scaleX(0.76); opacity: 0.48; }
+      }
+
+      .quran-answer-title {
+        display: block;
+        position: relative;
+        z-index: 1;
+        margin: 0 0 12px;
+        color: rgba(48, 53, 62, 0.5);
+        font-size: 15px;
+        font-weight: 400;
+      }
+
+      .selection-scrim,
+      .selection-frame-glow,
+      .selection-frame-core {
+        display: none;
+      }
+
+      .selection-range-art {
+        opacity: 0;
+        transition: opacity 280ms ease;
+        pointer-events: none;
+      }
+
+      .screen.has-selection .selection-range-art {
+        opacity: 1;
+      }
+
+      .selection-frame-glow {
+        fill: none;
+        stroke: url(#selectionGlowGradient);
+        stroke-width: 8;
+        filter:
+          drop-shadow(0 0 8px rgba(88, 218, 255, 0.52))
+          drop-shadow(0 0 14px rgba(255, 88, 180, 0.36));
+      }
+
+      .selection-frame-core {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.42);
+        stroke-width: 1.3;
+      }
+
+      .selection-corners {
+        display: none;
+      }
+
+      .selection-corners path {
+        fill: none;
+        stroke: #fff;
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.42));
+      }
+
+      .gesture-pointer {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 30;
+        width: 34px;
+        height: 34px;
+        opacity: 0;
+        transform: translate(0, 0);
+        pointer-events: none;
+        filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.28));
+      }
+
+      .gesture-pointer svg {
+        display: block;
+        width: 34px;
+        height: 34px;
+      }
+
+      .gesture-pointer.is-visible {
+        opacity: 1;
+      }
+
+      .dynamic-island {
+        left: 415px;
+        top: 10px;
+        z-index: 31;
+        width: 120px;
+        height: 95px;
+        opacity: 1;
+        visibility: visible;
+        transition:
+          top 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 240ms ease,
+          transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .glass-lens {
+        position: absolute;
+        z-index: 18;
+        top: 28px;
+        left: 0;
+        right: 0;
+        height: 44px;
+        overflow: hidden;
+        border-radius: 999px;
+        clip-path: inset(0 round 47.5px);
+        border: 0;
+        background:
+          radial-gradient(150px 50px at 50% -26%, rgba(110, 110, 110, 0.52), rgba(0, 0, 0, 0) 62%),
+          linear-gradient(180deg, #050505 0%, #000 50%, rgba(78, 78, 78, 0.08) 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.18),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.46),
+          0 8px 18px rgba(0, 0, 0, 0.2);
+        opacity: 1;
+        transform: none;
+        transform-origin: 50% 0;
+        isolation: isolate;
+      }
+
+      .glass-lens::before,
+      .glass-lens::after,
+      .glass-lens__stroke {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        clip-path: inherit;
+      }
+
+      .glass-lens::before,
+      .glass-lens::after {
+        display: none;
+      }
+
+      .glass-lens__stroke {
+        z-index: 12;
+        display: block;
+        padding: 1px;
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.56) 31%, rgba(255, 255, 255, 0.94) 100%);
+        -webkit-mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask:
+          linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        mask-composite: exclude;
+      }
+
+      .wave-video {
+        position: absolute;
+        z-index: 6;
+        left: -12%;
+        top: 16%;
+        display: block;
+        width: 124%;
+        height: 72%;
+        opacity: 0;
+        object-fit: cover;
+        object-position: center;
+        mix-blend-mode: screen;
+        filter: brightness(1.18) contrast(1.55) saturate(1.28);
+        transform-origin: 50% 50%;
+        pointer-events: none;
+        -webkit-mask: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+        mask: linear-gradient(90deg, transparent 0%, #000 10%, #000 90%, transparent 100%);
+      }
+
+      .lens-horizon {
+        position: absolute;
+        z-index: 4;
+        left: 9%;
+        right: 9%;
+        top: 46%;
+        height: 10px;
+        border-radius: 50%;
+        background:
+          radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 1) 0 24%, rgba(255, 255, 255, 0.42) 44%, transparent 72%),
+          linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.98), transparent);
+        filter: blur(2px);
+        opacity: 0;
+        mix-blend-mode: screen;
+      }
+
+      .lens-caustic {
+        position: absolute;
+        z-index: 6;
+        left: 34px;
+        right: 34px;
+        bottom: 24px;
+        height: 28px;
+        border-radius: 50%;
+        background:
+          linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.78), transparent),
+          radial-gradient(ellipse at 50% 90%, rgba(255, 255, 255, 0.42), transparent 60%);
+        filter: blur(7px);
+        opacity: 0;
+      }
+
+      .lens-glint {
+        position: absolute;
+        z-index: 10;
+        top: -32%;
+        left: -54%;
+        width: 58%;
+        height: 160%;
+        background: linear-gradient(100deg, transparent 0 34%, rgba(255, 255, 255, 0.78) 45%, transparent 58% 100%);
+        transform: rotate(12deg);
+        opacity: 0;
+      }
+
+      .dynamic-island__canvas {
+        display: none;
+      }
+
+      .dynamic-island__avatars {
+        display: none;
+      }
+
+      .dynamic-island.is-playing .glass-lens {
+        animation: lensMorph 0.56s linear forwards;
+      }
+
+      .dynamic-island.is-playing .lens-horizon {
+        animation: chromaWave 0.93s ease-in-out forwards;
+      }
+
+      .dynamic-island.is-playing .wave-video {
+        animation: waveVideoReveal 0.93s ease-in-out forwards;
+      }
+
+      .dynamic-island.is-playing .lens-caustic {
+        animation: lowerEdgeGlow 0.93s ease-in-out forwards;
+      }
+
+      .dynamic-island.is-playing .lens-glint {
+        animation: glintSweep 0.93s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      }
+
+      .dynamic-island.is-listening {
+        animation: islandListeningFloat 3.6s ease-in-out infinite;
+      }
+
+      @keyframes lensMorph {
+        0% {
+          opacity: 1;
+          top: 28px;
+          height: 44px;
+          border-radius: 999px;
+          transform: scaleX(1);
+        }
+        18% {
+          opacity: 1;
+          top: 28px;
+          height: 44px;
+          border-radius: 999px;
+          transform: scaleX(1.02);
+        }
+        42% {
+          opacity: 1;
+          top: 18px;
+          height: 64px;
+          border-radius: 36px;
+          transform: scaleX(1.04);
+        }
+        68% {
+          opacity: 1;
+          top: 4px;
+          height: 90px;
+          border-radius: 48px;
+          transform: scaleX(1.02);
+        }
+        84% {
+          opacity: 1;
+          top: 0;
+          height: 97px;
+          border-radius: 48.5px;
+          transform: scaleX(1.008);
+        }
+        94% {
+          opacity: 1;
+          top: 0;
+          height: 95px;
+          border-radius: 47.5px;
+          transform: scaleX(1.002);
+        }
+        100% {
+          opacity: 1;
+          top: 0;
+          height: 95px;
+          border-radius: 47.5px;
+          transform: scaleX(1);
+        }
+      }
+
+      @keyframes islandListeningFloat {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+        }
+        48% {
+          transform: translateY(-3px) scale(1.006);
+        }
+      }
+
+      @keyframes chromaWave {
+        0%,
+        11% {
+          transform: translateX(-26px) translateY(5px) scaleX(0.82) skewX(-9deg);
+          opacity: 0;
+        }
+        18% {
+          transform: translateX(-14px) translateY(3px) scaleX(0.98) skewX(-6deg);
+          opacity: 0.36;
+        }
+        34% {
+          transform: translateX(-2px) translateY(-3px) scaleX(1.08) skewX(7deg);
+          opacity: 0.46;
+        }
+        52% {
+          transform: translateX(12px) translateY(4px) scaleX(1.14) skewX(-5deg);
+          opacity: 0.42;
+        }
+        100% {
+          transform: translateX(22px) translateY(-1px) scaleX(1) skewX(4deg);
+          opacity: 0.18;
+        }
+      }
+
+      @keyframes waveVideoReveal {
+        0%,
+        11% {
+          opacity: 0;
+          transform: translateY(7px) scaleX(0.92);
+        }
+        18% {
+          opacity: 0.82;
+          transform: translateY(3px) scaleX(0.98);
+        }
+        34%,
+        68% {
+          opacity: 1;
+          transform: translateY(0) scaleX(1);
+        }
+        100% {
+          opacity: 0.9;
+          transform: translateY(-2px) scaleX(0.98);
+        }
+      }
+
+      @keyframes lowerEdgeGlow {
+        0%,
+        12% {
+          opacity: 0;
+          transform: translateY(10px) scaleX(0.74);
+        }
+        22%,
+        72% {
+          opacity: 0.72;
+          transform: translateY(0) scaleX(1);
+        }
+        100% {
+          opacity: 0.52;
+          transform: translateY(0) scaleX(0.94);
+        }
+      }
+
+      @keyframes glintSweep {
+        0%,
+        14% {
+          transform: translateX(0) rotate(12deg);
+          opacity: 0;
+        }
+        33% {
+          opacity: 0.76;
+        }
+        100% {
+          transform: translateX(420%) rotate(12deg);
+          opacity: 0;
+        }
+      }
+
+      .dynamic-island {
+        left: 415px;
+        top: 12px;
+        z-index: 31;
+        width: 120px;
+        height: 44px;
+        opacity: 1;
+        visibility: visible;
+        transition:
+          left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          top 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          filter 240ms ease,
+          transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .dynamic-island__glass {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+        border-radius: 55px;
+        isolation: isolate;
+        background:
+          radial-gradient(120px 44px at 50% -22%, rgba(90, 90, 90, 0.56), rgba(0, 0, 0, 0) 64%),
+          linear-gradient(180deg, #000 0%, #000 74%, rgba(80, 80, 80, 0.06) 100%);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.18),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.46),
+          0 8px 18px rgba(0, 0, 0, 0.2);
+        backdrop-filter: none;
+      }
+
+      .dynamic-island__glass::before,
+      .dynamic-island__glass::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+        border-radius: inherit;
+      }
+
+      .dynamic-island__glass::before {
+        inset: 32px 2px auto;
+        height: 10px;
+        opacity: 0.9;
+        background: linear-gradient(92deg, rgba(67, 201, 255, 0), rgba(73, 228, 255, 0.62), rgba(255, 64, 188, 0.82), rgba(255, 255, 255, 0));
+        filter: blur(6px);
+        transform: none;
+      }
+
+      .dynamic-island__glass::after {
+        inset: 0;
+        border: none;
+        box-shadow: none;
+      }
+
+      .dynamic-island__color-video {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -18px;
+        z-index: 1;
+        display: block;
+        width: 100%;
+        height: 36px;
+        object-fit: fill;
+        object-position: center bottom;
+        border-radius: 0 0 999px 999px;
+        opacity: 0.8;
+        mix-blend-mode: screen;
+        filter: brightness(1.55) contrast(1.28) saturate(1.18);
+        pointer-events: none;
+      }
+
+      .dynamic-island__canvas,
+      .dynamic-island__avatars {
+        display: none;
+      }
+
+      .dynamic-island.is-playing,
+      .dynamic-island.is-listening {
+        animation: none;
+      }
+
+      .voice-transcript {
+        position: absolute;
+        left: 433px;
+        top: 113px;
+        z-index: 30;
+        min-width: 84px;
+        height: 30px;
+        display: grid;
+        place-items: center;
+        padding: 0 14px;
+        border: 1px solid rgba(255, 255, 255, 0.36);
+        border-radius: 999px;
+        background: rgba(0, 0, 0, 0.78);
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+        opacity: 0;
+        transform: translateY(-8px) scale(0.94);
+        transition:
+          opacity 220ms ease,
+          transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+      }
+
+      .voice-transcript.is-visible {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-8px) scale(0.94);
+      }
+
+      .ai-answer-panel {
+        position: absolute;
+        left: 526px;
+        top: 214px;
+        z-index: 24;
+        width: 382px;
+        height: 0;
+        min-height: 0;
+        max-height: 462px;
+        padding: 0 24px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 26px;
+        background:
+          linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 78%, rgba(0, 0, 0, 1) 80%, rgba(0, 0, 0, 0.9) 90%, rgba(0, 0, 0, 0) 94%, rgba(0, 0, 0, 0) 100%),
+          rgba(0, 0, 0, 0.82);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.2),
+          inset 0 -34px 56px rgba(255, 255, 255, 0.16),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.34),
+          inset 0 0 28px rgba(255, 255, 255, 0.04),
+          0 22px 42px rgba(0, 0, 0, 0.34);
+        color: #fff;
+        opacity: 0;
+        transform: translateX(-12px) scale(0.98);
+        transition:
+          height 360ms cubic-bezier(0.22, 1, 0.36, 1),
+          padding 260ms cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 260ms ease,
+          transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+        pointer-events: none;
+        backdrop-filter: blur(7px) saturate(1.42) contrast(1.08);
+        isolation: isolate;
+        --holo-cyan: rgba(210, 236, 255, 0.62);
+        --holo-blue: rgba(75, 151, 243, 0.34);
+      }
+
+      .ai-answer-panel::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        border-radius: inherit;
+        background: url("./assets/answer-card-bg-figma.png") center / 100% 100% no-repeat;
+        opacity: 1;
+        mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 82%, transparent 100%);
+        -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 78%, transparent 82%, transparent 100%);
+        pointer-events: none;
+      }
+
+      .ai-answer-panel::after {
+        content: "";
+        position: absolute;
+        left: -54px;
+        right: -54px;
+        bottom: -13px;
+        z-index: 2;
+        height: 38px;
+        background: url("./assets/answer-card-wave-figma.png") center bottom / 100% 100% no-repeat;
+        filter: saturate(1) brightness(1.02);
+        opacity: 0;
+        mix-blend-mode: normal;
+        transform: translate3d(-10px, 2px, 0) scaleX(1.02);
+        transition: opacity 360ms ease, transform 360ms cubic-bezier(0.22, 1, 0.36, 1);
+        animation: none;
+        pointer-events: none;
+      }
+
+      .ai-answer-panel.is-visible {
+        opacity: 1;
+        padding: 20px 24px;
+        transform: translateX(0) scale(1);
+      }
+
+      .quran-answer-panel {
+        z-index: 32;
+        /* 长文本回答按完整内容展开；底部预留收起条与 30px 安全距离。 */
+        max-height: 700px;
+        border: 1px solid #fff;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 6px 30px rgba(89, 85, 104, 0.4);
+        color: #151515;
+        backdrop-filter: blur(25px);
+        --holo-cyan: rgba(255, 255, 255, 0.72);
+        --holo-blue: rgba(255, 255, 255, 0.42);
+      }
+
+      .quran-answer-panel::before {
+        display: none;
+      }
+
+      .quran-answer-panel::after {
+        left: 50%;
+        right: auto;
+        bottom: 16px;
+        z-index: 5;
+        width: 75px;
+        height: 5px;
+        border-radius: 5px;
+        background: #7d7d7d;
+        filter: none;
+        opacity: 0;
+        transform: translateX(-50%);
+        transition: opacity 180ms ease;
+        animation: none;
+      }
+
+      .quran-answer-panel.is-visible {
+        /* 为完成态固定的底部收起条留出安全空间，避免与流式文字重叠。 */
+        padding: 20px 24px 40px;
+      }
+
+      .quran-answer-panel .ai-answer-text {
+        color: #151515;
+        font-weight: 400;
+      }
+
+      .quran-answer-panel .stream-chunk::after {
+        background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.22) 24%, rgba(255, 255, 255, 0.72) 50%, rgba(255, 255, 255, 0.34) 72%, transparent 100%);
+      }
+
+      .ai-answer-panel.is-complete::after {
+        opacity: 0.9;
+        animation: answerWaveBreathe 3.2s ease-in-out infinite;
+      }
+
+      /* 必须放在通用完成态之后，防止通用波纹动画覆盖灰色收起条的固定定位。 */
+      .ai-answer-panel.quran-answer-panel.is-visible::after,
+      .ai-answer-panel.quran-answer-panel.is-complete::after {
+        opacity: 1;
+        transform: translateX(-50%);
+        animation: none;
+      }
+
+      /* Figma 199:6467：语音生成备忘录后的顶部毛玻璃回答卡片。 */
+      .voice-memo-panel {
+        left: 184px;
+        top: 30px;
+        z-index: 38;
+        width: 580px;
+        max-height: none;
+        border: 1px solid #fff;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 6px 30px rgba(89, 85, 104, 0.4);
+        color: #151515;
+        backdrop-filter: blur(25px);
+        -webkit-backdrop-filter: blur(25px);
+        --holo-cyan: rgba(255, 255, 255, 0.72);
+        --holo-blue: rgba(255, 255, 255, 0.42);
+      }
+
+      .voice-memo-panel::before {
+        display: none;
+      }
+
+      .voice-memo-panel::after {
+        left: 50%;
+        right: auto;
+        bottom: 11px;
+        width: 75px;
+        height: 5px;
+        border-radius: 5px;
+        background: #7d7d7d;
+        filter: none;
+        transform: translateX(-50%);
+      }
+
+      .voice-memo-panel.is-visible {
+        height: 216px;
+        padding: 20px 24px 28px;
+      }
+
+      .voice-memo-panel.is-complete::after {
+        opacity: 1;
+        animation: none;
+      }
+
+      .voice-memo-question {
+        position: relative;
+        z-index: 1;
+        margin: 0 0 14px;
+        color: #a3a4a5;
+        font-size: 15px;
+        font-weight: 400;
+        line-height: 22px;
+      }
+
+      .voice-memo-panel .ai-answer-text {
+        width: 100%;
+        color: #151515;
+        font-weight: 400;
+      }
+
+      .voice-memo-panel .stream-chunk::after {
+        background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.22) 24%, rgba(255, 255, 255, 0.72) 50%, rgba(255, 255, 255, 0.34) 72%, transparent 100%);
+      }
+
+      .voice-memo-preview {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 340px;
+        height: 98px;
+        margin-top: 13px;
+        padding: 16px;
+        border: 0.5px solid #d7d7db;
+        border-radius: 12px;
+        background: #f9f9fa;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+        transform-origin: 0 50%;
+      }
+
+      .voice-memo-preview__copy {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .voice-memo-preview__title {
+        color: #18181b;
+        font-size: 16px;
+        font-weight: 400;
+        line-height: 20px;
+        white-space: nowrap;
+      }
+
+      .voice-memo-preview__date {
+        color: #6b6f7a;
+        font-size: 12px;
+        line-height: 20px;
+      }
+
+      .voice-memo-preview__thumb {
+        position: relative;
+        width: 88px;
+        height: 66px;
+        overflow: hidden;
+        flex: 0 0 88px;
+        border-radius: 12px;
+        background: #f9f9fa;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      }
+
+      .voice-memo-preview__thumb::before,
+      .voice-memo-preview__thumb::after {
+        content: "";
+        position: absolute;
+        left: 14px;
+        height: 7px;
+        border-radius: 999px;
+        background: #e7e7ea;
+      }
+
+      .voice-memo-preview__thumb::before {
+        top: 20px;
+        width: 28px;
+      }
+
+      .voice-memo-preview__thumb::after {
+        top: 33px;
+        width: 48px;
+      }
+
+      .ai-answer-text {
+        position: relative;
+        z-index: 4;
+        display: block;
+        width: 334px;
+        margin: 0;
+        color: #fff;
+        font-family: "HYQiHei", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        line-height: 22px;
+        letter-spacing: 0;
+        white-space: normal;
+        word-break: normal;
+        overflow-wrap: normal;
+        text-rendering: geometricPrecision;
+      }
+
+      .answer-line {
+        display: block;
+        min-height: 22px;
+      }
+
+      .answer-line.is-bullet {
+        padding-left: 20px;
+        text-indent: -20px;
+      }
+
+      @keyframes answerWaveBreathe {
+        0%,
+        100% {
+          opacity: 0.82;
+          transform: translate3d(-14px, 0, 0) scaleX(1.02) scaleY(0.94);
+        }
+
+        38% {
+          opacity: 1;
+          transform: translate3d(10px, -2px, 0) scaleX(1.055) scaleY(1.08);
+        }
+
+        68% {
+          opacity: 0.9;
+          transform: translate3d(3px, 0, 0) scaleX(1.03) scaleY(1);
+        }
+      }
+
+      .stream-chunk {
+        position: relative;
+        display: inline;
+        vertical-align: baseline;
+        animation: answerChunkDiffuse var(--chunk-duration, 760ms) cubic-bezier(0.22, 0.61, 0.36, 1) both;
+        animation-delay: var(--chunk-delay, 0ms);
+        will-change: filter, opacity, text-shadow;
+      }
+
+      .stream-chunk::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        bottom: -2px;
+        left: 0;
+        width: 48%;
+        opacity: var(--sweep-alpha, 0.46);
+        background: linear-gradient(100deg, transparent 0%, rgba(170, 214, 255, 0.22) 24%, rgba(106, 178, 255, 0.72) 50%, rgba(64, 126, 232, 0.34) 72%, transparent 100%);
+        transform: translateX(-160%);
+        animation: answerLineSweep 820ms linear both;
+        animation-delay: var(--sweep-delay, 80ms);
+        pointer-events: none;
+      }
+
+      @keyframes answerLineSweep {
+        0% {
+          visibility: visible;
+          transform: translateX(-160%);
+        }
+
+        99% {
+          visibility: visible;
+          transform: translateX(var(--sweep-end, 150%));
+        }
+
+        100% {
+          visibility: hidden;
+          transform: translateX(var(--sweep-end, 150%));
+        }
+      }
+
+      @keyframes answerChunkDiffuse {
+        0% {
+          filter: blur(8px);
+          opacity: 0;
+          text-shadow: 0 0 14px var(--holo-cyan), 0 0 28px var(--holo-blue);
+        }
+
+        45% {
+          filter: blur(4px);
+          opacity: 0.42;
+          text-shadow: 0 0 10px var(--holo-cyan), 0 0 18px var(--holo-blue);
+        }
+
+        78% {
+          filter: blur(1.2px);
+          opacity: 0.86;
+          text-shadow: 0 0 5px var(--holo-cyan);
+        }
+
+        100% {
+          filter: blur(0);
+          opacity: 1;
+          text-shadow: none;
+        }
+      }
+
+      /* 天禧伴随底 bar：空闲、唤醒确认、伴随提示、稳定伴随四个阶段 */
+      .ai-companion {
+        position: absolute;
+        left: 50%;
+        bottom: 14px;
+        z-index: 34;
+        width: 300px;
+        height: 82px;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .ai-companion.is-intro,
+      .ai-companion.is-tip,
+      .ai-companion.is-active {
+        pointer-events: auto;
+      }
+
+      .ai-companion__bar {
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        display: grid;
+        place-items: center;
+        width: 160px;
+        height: 7px;
+        overflow: hidden;
+        border: 0 solid transparent;
+        border-radius: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        color: rgba(65, 68, 82, 0.95);
+        transform: translateX(-50%) translateZ(0);
+        transform-origin: 50% 100%;
+        transition:
+          width 620ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-radius 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          border-color 360ms ease,
+          background 520ms ease,
+          box-shadow 520ms ease;
+        will-change: width, height, transform;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .ai-companion__bar:focus-visible {
+        outline: 2px solid rgba(255, 255, 255, 0.96);
+        outline-offset: 4px;
+      }
+
+      .ai-companion__bar-label {
+        font-size: 12px;
+        line-height: 20px;
+        letter-spacing: 0.02em;
+        opacity: 0;
+        transform: translateY(5px) scale(0.94);
+        transition: opacity 180ms ease, transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .ai-companion__bar-icon {
+        position: relative;
+        display: none;
+        width: 18px;
+        height: 18px;
+        flex: 0 0 18px;
+      }
+
+      .ai-companion__bar-icon-circle,
+      .ai-companion__bar-icon-check {
+        position: absolute;
+        display: block;
+      }
+
+      .ai-companion__bar-icon-circle {
+        inset: 1.833px;
+        width: 14.333px;
+        height: 14.333px;
+      }
+
+      .ai-companion__bar-icon-check {
+        top: 7px;
+        left: 6.333px;
+        width: 7px;
+        height: 5px;
+      }
+
+      .ai-companion__bubble {
+        position: absolute;
+        left: 50%;
+        bottom: 18px;
+        width: 274px;
+        height: 40.863px;
+        color: #696b7a;
+        font-size: 14px;
+        line-height: 21.85px;
+        white-space: nowrap;
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.92);
+        filter: blur(3px);
+        transition: opacity 300ms ease, transform 520ms cubic-bezier(0.22, 1, 0.36, 1), filter 360ms ease;
+      }
+
+      /* Figma 188:4285: 36px body, 12px corners, with a 16.466 × 8.864px tail. */
+      .ai-companion__bubble::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        z-index: 1;
+        height: 36px;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        background:
+          linear-gradient(rgba(232, 232, 232, 0.8), rgba(232, 232, 232, 0.8)) padding-box,
+          linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.26)) border-box;
+        backdrop-filter: blur(12px);
+      }
+
+      .ai-companion__bubble-label {
+        position: absolute;
+        z-index: 2;
+        top: 7px;
+        left: 25px;
+        width: 224px;
+        overflow: hidden;
+        text-align: center;
+        text-overflow: ellipsis;
+      }
+
+      .ai-companion__bubble-tail {
+        position: absolute;
+        z-index: 0;
+        top: 32px;
+        left: 50%;
+        width: 16.466px;
+        height: 8.864px;
+        transform: translateX(-50%);
+      }
+
+      .ai-companion.is-intro .ai-companion__bar {
+        width: 94px;
+        height: 30px;
+        border-width: 1px;
+        border-color: #fcedff;
+        /* Figma node 188:4194: the translucent color wash sits on an opaque white base. */
+        background-color: #fff;
+        background-image: linear-gradient(114deg, rgba(254, 17, 169, 0.3), rgba(250, 86, 82, 0.3) 19%, rgba(250, 145, 69, 0.3) 39%, rgba(101, 198, 231, 0.3) 62%, rgba(100, 128, 255, 0.3) 82%, rgba(199, 136, 255, 0.3));
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        animation: companionIntro 740ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+
+      .ai-companion.is-intro .ai-companion__bar-label {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        transition-delay: 190ms;
+      }
+
+      .ai-companion.is-tip .ai-companion__bar,
+      .ai-companion.is-active .ai-companion__bar {
+        width: 160px;
+        height: 7px;
+        border-width: 0;
+        border-radius: 4px;
+        background: linear-gradient(160deg, rgba(254, 17, 169, 0.75), rgba(250, 86, 82, 0.75) 18%, rgba(250, 145, 69, 0.75) 37%, rgba(101, 198, 231, 0.75) 61%, rgba(100, 128, 255, 0.75) 80%, rgba(199, 136, 255, 0.75));
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1), 0 0 10px rgba(135, 163, 255, 0.3);
+      }
+
+      .ai-companion.is-tip .ai-companion__bar { animation: companionColorSettle 820ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+      .ai-companion.is-tip .ai-companion__bubble {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1);
+        filter: blur(0);
+        transition-delay: 240ms;
+        animation: companionBubbleFloat 2s ease-in-out 650ms infinite alternate;
+      }
+
+      .ai-companion.is-saving .ai-companion__bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        width: 144px;
+        height: 44px;
+        border: 1px solid #fff;
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        color: rgba(65, 68, 82, 0.95);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        animation: none;
+      }
+
+      .ai-companion.is-saving .ai-companion__bar-label {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        font-size: 13px;
+        font-weight: 400;
+        line-height: normal;
+        letter-spacing: 0;
+        text-shadow: none;
+      }
+
+      .ai-companion.is-saving .ai-companion__bar-icon {
+        display: block;
+      }
+
+      @keyframes companionIntro {
+        0% { transform: translateX(-50%) translateY(5px) scale(0.7); filter: saturate(0.65); }
+        65% { transform: translateX(-50%) translateY(-2px) scale(1.04); }
+        100% { transform: translateX(-50%) translateY(0) scale(1); filter: saturate(1); }
+      }
+
+      @keyframes companionColorSettle {
+        0% { transform: translateX(-50%) scaleX(0.7); filter: brightness(1.2) saturate(1.3); }
+        62% { transform: translateX(-50%) scaleX(1.05); }
+        100% { transform: translateX(-50%) scaleX(1); filter: brightness(1) saturate(1); }
+      }
+
+      @keyframes companionBubbleFloat {
+        from { transform: translateX(-50%) translateY(0) scale(1); }
+        to { transform: translateX(-50%) translateY(-2px) scale(1.008); }
+      }
+
+      @keyframes companionSaved {
+        0% { transform: translateX(-50%) translateY(8px) scale(0.72); filter: saturate(1.3) brightness(1.15); }
+        62% { transform: translateX(-50%) translateY(-2px) scale(1.04); }
+        100% { transform: translateX(-50%) translateY(0) scale(1); filter: saturate(1); }
+      }
+
+      @media (max-width: 980px), (max-height: 900px) {
+        .stage {
+          --stage-scale: min(calc(100vw / 949px), calc(100dvh / 870px), 1);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage" aria-label="AI 唤醒识屏 Demo">
+      <section class="device" aria-label="大折叠手机 mockup">
+        <button class="side-ai-key" id="sideAiKey" type="button" aria-label="长按唤醒天禧 AI"></button>
+        <div class="screen" id="screen">
+          <header class="status-bar" aria-label="状态栏">
+            <img src="./assets/status-bar-figma.png" alt="11:35 状态栏" />
+          </header>
+
+          <section class="gallery" aria-label="伊斯坦布尔图片">
+            <div class="slides" id="slides">
+              <img src="./assets/image-2.png" alt="博斯普鲁斯海峡游船风景" />
+              <img src="./assets/image-3.png" alt="伊斯坦布尔黄昏桥景" />
+              <img src="./assets/image-1.png" alt="伊斯坦布尔海峡与城市风景拼图" />
+            </div>
+            <div class="slide-dots" id="slideDots" aria-label="图片分页"></div>
+          </section>
+
+          <article class="article" aria-label="小红书文章详情">
+            <header class="author-bar">
+              <span class="avatar" aria-hidden="true"><img src="./assets/image-1.png" alt="" /></span>
+              <strong class="author-name">太阳下山有泽霖</strong>
+              <button class="follow-button" type="button">关注</button>
+              <button class="share-button" type="button" aria-label="分享">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                  <path d="M14 4l6 6-6 6" />
+                  <path d="M20 10H9a5 5 0 0 0-5 5v5" />
+                </svg>
+              </button>
+            </header>
+
+            <div class="article-scroll">
+              <h1>横跨亚欧，穿行千年星月之国</h1>
+              <p class="lead">如果全世界是一个国家的话，那么它的首都肯定是伊斯坦布尔。</p>
+              <p class="body-copy">在伊斯坦布尔，最浪漫的事莫过于乘船横跨博斯普鲁斯海峡✨左手欧洲，右手亚洲，90分钟就能看尽两岸精华！攻略分两种船型，按需选择👇
+🚢  观光游船：高效打卡，移动观景台
+适合：想轻松看全景点、不想自己做攻略的朋友
+🎫 票价：约260里拉，航行90分钟
+📍登船：导航 “Bosphorus Cruise Tours & Tickets” 或 “Turyol Eminönü”
+（⚠️ 别只搜Eminönü，码头多易错！）
+🕐 时间：整点过5分发船，顺时针环线
+🔥 看点：耶尼清真寺、加拉太塔、多尔玛巴赫切宫、欧亚大桥、少女塔等
+🌄 公共交通轮渡：本地生活，性价比之王
+适合：想体验地道生活、预算有限的旅行者
+🎫 票价：单程仅几十里拉（≈几元人民币）
+🚢 码头：首选 Eminönü Pier
+
+<span class="quran-target" id="quranTarget">《古兰经》</span>中有句谚语:《古兰经》诞生在麦加，读者在埃及，珍藏在伊斯坦布尔。伊斯坦布尔现存的450座清真寺，就是这句谚语最好的证明，在老城区抬头仰望，很容易欣赏到清真寺漂亮的宣礼塔。老城区很大，建议可以按照下列分区进行探索，以圣索菲娅清真寺、地下水宫为代表的东部，以巴扎、香料巴扎为代表的中部和以科拉教堂为代表的西部。</p>
+            </div>
+
+            <footer class="bottom-bar">
+              <div class="bottom-shell">
+                <div class="comment-input" aria-label="评论输入框">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                  </svg>
+                  <span>说点什么...</span>
+                </div>
+                <div class="action-counts" aria-label="互动数据">
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+                    </svg>
+                    12
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9Z" />
+                    </svg>
+                    8
+                  </span>
+                  <span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />
+                    </svg>
+                    5
+                  </span>
+                </div>
+              </div>
+            </footer>
+          </article>
+
+          <canvas class="ripple-canvas" id="rippleCanvas" aria-hidden="true"></canvas>
+          <div class="ai-companion" id="aiCompanion" aria-live="polite" aria-label="天禧伴随状态">
+            <div class="ai-companion__bubble">
+              <svg class="ai-companion__bubble-tail" viewBox="0 0 16.7535 8.8639" aria-hidden="true" focusable="false">
+                <defs>
+                  <linearGradient id="aiCompanionBubbleTailStroke" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#fff" stop-opacity="0.9" />
+                    <stop offset="100%" stop-color="#fff" stop-opacity="0.26" />
+                  </linearGradient>
+                </defs>
+                <path d="M 0.512 0 L 16.242 0 L 16.7535 0.574 L 10.0612 8.082 L 6.69225 8.082 L 0 0.574 Z" fill="#e8e8e8" fill-opacity="0.8" stroke="url(#aiCompanionBubbleTailStroke)" stroke-width="1" />
+              </svg>
+              <span class="ai-companion__bubble-label">点击导航条，唤醒天禧伴随态或退出</span>
+            </div>
+            <button class="ai-companion__bar" id="aiCompanionBar" type="button" aria-label="进入语音问答">
+              <span class="ai-companion__bar-icon" aria-hidden="true">
+                <img class="ai-companion__bar-icon-circle" src="./assets/toast-success-figma.svg" alt="" />
+                <img class="ai-companion__bar-icon-check" src="./assets/toast-success-check-figma.svg" alt="" />
+              </span>
+              <span class="ai-companion__bar-label">天禧伴随中</span>
+            </button>
+          </div>
+          <div class="dynamic-island" id="dynamicIsland" aria-hidden="true">
+            <div class="dynamic-island__glass">
+              <video class="dynamic-island__color-video" id="islandColorVideo" src="./assets/dynamic-island-color-light.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+            </div>
+            <canvas class="dynamic-island__canvas" id="islandAcceptCanvas"></canvas>
+            <div class="dynamic-island__avatars">
+              <span class="dynamic-island__avatar"><img src="./assets/image-1.png" alt="" /></span>
+              <span class="dynamic-island__avatar"><img src="./assets/image-2.png" alt="" /></span>
+            </div>
+          </div>
+          <svg class="gesture-layer" id="gestureLayer" viewBox="0 0 484 780" aria-hidden="true">
+            <defs>
+              <linearGradient id="selectionScrimGradient" x1="242" y1="0" x2="242" y2="780" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0.18" />
+                <stop offset="0.18" stop-color="#78c9ff" stop-opacity="0.16" />
+                <stop offset="0.54" stop-color="#111111" stop-opacity="0.24" />
+                <stop offset="1" stop-color="#000000" stop-opacity="0.46" />
+              </linearGradient>
+              <radialGradient id="selectionScrimVignette" cx="242" cy="390" r="410" gradientUnits="userSpaceOnUse">
+                <stop offset="0.32" stop-color="#ffffff" stop-opacity="0" />
+                <stop offset="0.78" stop-color="#4f7dff" stop-opacity="0.12" />
+                <stop offset="1" stop-color="#000000" stop-opacity="0.30" />
+              </radialGradient>
+              <linearGradient id="selectionGlowGradient" x1="0" y1="0" x2="484" y2="780" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#ffffff" stop-opacity="0.98" />
+                <stop offset="0.22" stop-color="#7feaff" stop-opacity="0.78" />
+                <stop offset="0.55" stop-color="#5f8cff" stop-opacity="0.44" />
+                <stop offset="0.82" stop-color="#ff62c8" stop-opacity="0.66" />
+                <stop offset="1" stop-color="#ffffff" stop-opacity="0.82" />
+              </linearGradient>
+              <linearGradient id="saveStarGradient" x1="646" y1="292" x2="838" y2="480" gradientUnits="userSpaceOnUse">
+                <stop offset="0" stop-color="#72e7ff" />
+                <stop offset="0.48" stop-color="#6f93ff" />
+                <stop offset="1" stop-color="#ff67c9" />
+              </linearGradient>
+            </defs>
+            <rect class="selection-scrim" x="0" y="0" width="484" height="780" rx="16" fill="url(#selectionScrimGradient)" />
+            <rect class="selection-scrim" x="0" y="0" width="484" height="780" rx="16" fill="url(#selectionScrimVignette)" />
+            <rect class="selection-frame-glow" x="4" y="4" width="476" height="772" rx="14" />
+            <rect class="selection-frame-core" x="6" y="6" width="472" height="768" rx="12" />
+            <image
+              class="selection-range-art"
+              href="./assets/selection-range-figma.png"
+              x="-21.8"
+              y="-28.7"
+              width="545.1"
+              height="831.6"
+              preserveAspectRatio="none"
+            />
+            <path
+              class="gesture-lasso"
+              id="gestureLasso"
+              d="M488 124 C410 87 238 76 126 134 C26 186 23 360 49 509 C80 689 177 797 321 779 C459 762 509 598 496 421 C484 255 552 174 488 124"
+            />
+            <g class="selection-corners">
+              <path d="M14 14 H43 M14 14 V43" />
+              <path d="M470 14 H441 M470 14 V43" />
+              <path d="M14 766 H43 M14 766 V737" />
+              <path d="M470 766 H441 M470 766 V737" />
+            </g>
+          </svg>
+          <svg class="text-gesture-layer" id="textGestureLayer" viewBox="0 0 949 850" aria-hidden="true">
+            <path class="text-gesture-lasso" id="textGestureLasso" />
+            <path class="save-star-path" id="saveStarPath" />
+          </svg>
+          <div class="quran-selection-frame" id="quranSelectionFrame" aria-hidden="true"></div>
+          <section class="quran-listening-ui" id="quranListeningUi" aria-label="文字圈选后的天禧操作">
+            <div class="quran-selection-scrim" id="quranSelectionScrim" aria-hidden="true"></div>
+            <div class="quran-listening-frost" aria-hidden="true"></div>
+            <img class="quran-listening-halo" src="./assets/quran-listening-halo-v2.png" alt="" aria-hidden="true" />
+            <div class="quran-listening-light-entrance" aria-hidden="true">
+              <div class="quran-listening-light"></div>
+            </div>
+            <div class="quran-recommendations" role="group" aria-label="推荐操作">
+              <button class="quran-recommendation quran-recommendation--primary" id="explainQuranButton" type="button">解释文字</button>
+              <button class="quran-recommendation" type="button">翻译</button>
+              <button class="quran-recommendation" type="button">区分《古兰经》与圣训</button>
+            </div>
+            <div class="quran-toolbar" aria-label="问天禧工具栏">
+              <button class="quran-ask-button" type="button"><img class="quran-voice-orb" src="./assets/quran-voice-orb.svg" alt="" aria-hidden="true" />问天禧</button>
+              <div class="quran-toolbar-actions" role="group" aria-label="问天禧操作">
+                <button class="quran-action-button" type="button" aria-label="下载"><img src="./assets/quran-action-download.svg" alt="" aria-hidden="true" /></button>
+                <button class="quran-action-button" type="button" aria-label="AI 翻译"><img src="./assets/quran-action-ai-translate.svg" alt="" aria-hidden="true" /></button>
+                <button class="quran-action-button" type="button" aria-label="打开文件"><img src="./assets/quran-action-open-file.svg" alt="" aria-hidden="true" /></button>
+                <button class="quran-action-button" type="button" aria-label="重新生成"><img src="./assets/quran-action-regenerate.svg" alt="" aria-hidden="true" /></button>
+                <button class="quran-action-button" type="button" aria-label="收藏"><img src="./assets/quran-action-star.svg" alt="" aria-hidden="true" /></button>
+              </div>
+            </div>
+            <div class="quran-listening-controls">
+              <button class="quran-listening-close" id="quranListeningClose" type="button" aria-label="退出收音模式">
+                <img src="./assets/quran-listening-close.svg" alt="" aria-hidden="true" />
+              </button>
+              <span id="voiceListeningLabel">我在听</span>
+              <button class="quran-keyboard-button" type="button" aria-label="键盘输入">
+                <img src="./assets/quran-listening-keyboard.svg" alt="" aria-hidden="true" />
+              </button>
+            </div>
+          </section>
+          <div class="gesture-pointer" id="gesturePointer" aria-hidden="true">
+            <svg viewBox="0 0 34 34" fill="none">
+              <path d="M7 3L27 18.2L17.2 20.2L12 30L7 3Z" fill="white" stroke="#151515" stroke-width="1.8" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="voice-transcript" id="voiceTranscript" aria-hidden="true">这是哪里？</div>
+          <section class="ai-answer-panel" id="aiAnswerPanel" aria-label="AI 回答">
+            <p class="ai-answer-text" id="aiAnswerText"></p>
+          </section>
+          <section class="ai-answer-panel quran-answer-panel" id="quranAnswerPanel" aria-label="AI 回答">
+            <span class="quran-answer-title">解释文字</span>
+            <p class="ai-answer-text" id="quranAnswerText"></p>
+          </section>
+          <section class="ai-answer-panel voice-memo-panel" id="voiceMemoPanel" aria-label="AI 备忘录回答">
+            <p class="voice-memo-question">根据这篇笔记帮我生成一个去伊斯坦布尔旅游清单的备忘录</p>
+            <p class="ai-answer-text" id="voiceMemoReply"></p>
+            <article class="voice-memo-preview" id="voiceMemoPreview" aria-label="生成的备忘录">
+              <div class="voice-memo-preview__copy">
+                <span class="voice-memo-preview__title">伊斯坦布尔旅游注意事项清单</span>
+                <span class="voice-memo-preview__date">创建时间：2026/6/16</span>
+              </div>
+              <span class="voice-memo-preview__thumb" aria-hidden="true"></span>
+            </article>
+          </section>
+        </div>
+        <span class="device-shell-highlight" aria-hidden="true"></span>
+      </section>
+    </main>
+    <span class="touch-cursor" id="touchCursor" aria-hidden="true"></span>
+
+    <script src="./assets/html2canvas.min.js"></script>
+    <script>
+      const device = document.querySelector(".device");
+      const slides = document.getElementById("slides");
+      const slideDots = document.getElementById("slideDots");
+      const articleScroll = document.querySelector(".article-scroll");
+      const touchCursor = document.getElementById("touchCursor");
+      const sideAiKey = document.getElementById("sideAiKey");
+      const screen = document.getElementById("screen");
+      const rippleCanvas = document.getElementById("rippleCanvas");
+      const rippleGl = rippleCanvas.getContext("webgl", {
+        alpha: true,
+        antialias: true,
+        premultipliedAlpha: false,
+        preserveDrawingBuffer: false
+      });
+      const dynamicIsland = document.getElementById("dynamicIsland");
+      const islandColorVideo = document.getElementById("islandColorVideo");
+      const islandAcceptCanvas = document.getElementById("islandAcceptCanvas");
+      const islandAcceptContext = islandAcceptCanvas.getContext("2d");
+      const slideCount = slides.children.length;
+      const gestureLayer = document.getElementById("gestureLayer");
+      const gestureLasso = document.getElementById("gestureLasso");
+      const textGestureLayer = document.getElementById("textGestureLayer");
+      const textGestureLasso = document.getElementById("textGestureLasso");
+      const quranTarget = document.getElementById("quranTarget");
+      const quranSelectionFrame = document.getElementById("quranSelectionFrame");
+      const quranSelectionScrim = document.getElementById("quranSelectionScrim");
+      const quranListeningUi = document.getElementById("quranListeningUi");
+      const quranListeningFrost = quranListeningUi.querySelector(".quran-listening-frost");
+      const quranListeningHalo = quranListeningUi.querySelector(".quran-listening-halo");
+      const quranListeningLightEntrance = quranListeningUi.querySelector(".quran-listening-light-entrance");
+      const quranListeningControls = quranListeningUi.querySelector(".quran-listening-controls");
+      const explainQuranButton = document.getElementById("explainQuranButton");
+      const quranListeningClose = document.getElementById("quranListeningClose");
+      const gesturePointer = document.getElementById("gesturePointer");
+      const voiceTranscript = document.getElementById("voiceTranscript");
+      const aiAnswerPanel = document.getElementById("aiAnswerPanel");
+      const aiAnswerText = document.getElementById("aiAnswerText");
+      const quranAnswerPanel = document.getElementById("quranAnswerPanel");
+      const quranAnswerText = document.getElementById("quranAnswerText");
+      const aiCompanion = document.getElementById("aiCompanion");
+      const aiCompanionBar = document.getElementById("aiCompanionBar");
+      const companionBarLabel = aiCompanion.querySelector(".ai-companion__bar-label");
+      const voiceListeningLabel = document.getElementById("voiceListeningLabel");
+      const voiceMemoPanel = document.getElementById("voiceMemoPanel");
+      const voiceMemoReply = document.getElementById("voiceMemoReply");
+      const voiceMemoPreview = document.getElementById("voiceMemoPreview");
+      const saveStarPath = document.getElementById("saveStarPath");
+      const targetSlideIndex = 1;
+      const scriptedDemoSlowdown = 1.5;
+      const slowScriptedDemo = (duration) => Math.round(duration * scriptedDemoSlowdown);
+
+      const aiKeyAnim = {
+        wavelength: 0.15,
+        duration: 2.083,
+        fadeDuration: 0,
+        decay: 2.0,
+        maxAmplitude: 0.018,
+        timerMs: 16,
+        ringTrail: 0.4
+      };
+
+      let currentSlide = 0;
+      let dragStartX = 0;
+      let isDragging = false;
+      let galleryGesture = null;
+      let pressTimer = 0;
+      let touchCursorVisible = false;
+      let isOuterTouchCursorActive = false;
+      let rippleStartTime = 0;
+      let rippleAnimationFrame = 0;
+      let resolveRippleCompletion = null;
+      let wakeSequenceId = 0;
+      let rippleSnapshotImage = null;
+      let rippleProgram = null;
+      let rippleTexture = null;
+      let ripplePositionBuffer = null;
+      let rippleTexcoordBuffer = null;
+      let rippleLocations = null;
+      let islandAnimationFrame = 0;
+      let islandColorVideoFrame = 0;
+      let islandColorVideoStart = 0;
+      let islandHasShown = false;
+      let demoTimers = [];
+      let gestureAnimationFrame = 0;
+      let gestureStrokeAnimation = null;
+      let answerTypeTimer = 0;
+      let drawPointerId = null;
+      let gestureMode = null;
+      let gesturePoints = [];
+      let scriptedDemoRunId = 0;
+
+      const gsap = window.gsap || createGsapLite();
+
+      function createGsapLite() {
+        const easeMap = {
+          "power1.out": "cubic-bezier(0.25, 0.46, 0.45, 0.94)",
+          "power2.out": "cubic-bezier(0.16, 1, 0.3, 1)",
+          "power3.out": "cubic-bezier(0.22, 1, 0.36, 1)",
+          "back.out(1.4)": "cubic-bezier(0.34, 1.42, 0.64, 1)",
+          none: "linear"
+        };
+
+        const toArray = (targets) => {
+          if (typeof targets === "string") return [...document.querySelectorAll(targets)];
+          if (targets instanceof Element) return [targets];
+          return [...targets];
+        };
+
+        const transformFor = (vars) => {
+          const y = vars.y ?? 0;
+          const x = vars.x ?? 0;
+          const scale = vars.scale ?? 1;
+          return `translate(${x}px, ${y}px) scale(${scale})`;
+        };
+
+        const frameFor = (vars) => {
+          const frame = {};
+          if ("autoAlpha" in vars) {
+            frame.opacity = vars.autoAlpha;
+            frame.visibility = vars.autoAlpha <= 0 ? "hidden" : "visible";
+          }
+          if ("opacity" in vars) frame.opacity = vars.opacity;
+          if ("scale" in vars || "x" in vars || "y" in vars) frame.transform = transformFor(vars);
+          if ("filter" in vars) frame.filter = vars.filter;
+          return frame;
+        };
+
+        const set = (targets, vars) => {
+          toArray(targets).forEach((target) => {
+            Object.assign(target.style, frameFor(vars));
+            if ("transformOrigin" in vars) target.style.transformOrigin = vars.transformOrigin;
+          });
+        };
+
+        const fromTo = (targets, fromVars, toVars) => {
+          const elements = toArray(targets);
+          set(elements, fromVars);
+          const animations = elements.map((element) =>
+            element.animate([frameFor(fromVars), frameFor(toVars)], {
+              duration: (toVars.duration ?? 0.5) * 1000,
+              delay: (toVars.delay ?? 0) * 1000,
+              easing: easeMap[toVars.ease] || easeMap["power2.out"],
+              fill: "forwards"
+            })
+          );
+
+          Promise.all(animations.map((animation) => animation.finished.catch(() => {}))).then(() => {
+            set(elements, toVars);
+            if (typeof toVars.onComplete === "function") toVars.onComplete();
+          });
+
+          return {
+            kill() {
+              animations.forEach((animation) => animation.cancel());
+            }
+          };
+        };
+
+        const timeline = ({ defaults = {} } = {}) => {
+          let cursor = 0;
+          let recentStart = 0;
+          const api = {
+            set(targets, vars) {
+              window.setTimeout(() => set(targets, vars), cursor * 1000);
+              return api;
+            },
+            fromTo(targets, fromVars, toVars, position) {
+              const merged = { ...defaults, ...toVars };
+              let start = cursor;
+              if (typeof position === "string" && position.startsWith("<")) {
+                start = recentStart + (parseFloat(position.slice(1)) || 0);
+              } else if (typeof position === "number") {
+                start = position;
+              }
+              window.setTimeout(() => fromTo(targets, fromVars, merged), Math.max(0, start * 1000));
+              recentStart = start;
+              cursor = Math.max(cursor, start + (merged.duration ?? defaults.duration ?? 0.5));
+              return api;
+            }
+          };
+          return api;
+        };
+
+        return { set, fromTo, timeline };
+      }
+
+      function renderDots() {
+        slideDots.innerHTML = "";
+        for (let index = 0; index < slideCount; index += 1) {
+          const dot = document.createElement("button");
+          dot.type = "button";
+          dot.setAttribute("aria-label", `切换到第 ${index + 1} 张`);
+          dot.addEventListener("click", () => setSlide(index));
+          slideDots.appendChild(dot);
+        }
+      }
+
+      function setSlide(index) {
+        currentSlide = Math.max(0, Math.min(slideCount - 1, index));
+        slides.style.transform = `translateX(${-currentSlide * 100}%)`;
+
+        [...slideDots.children].forEach((dot, dotIndex) => {
+          dot.classList.toggle("is-active", dotIndex === currentSlide);
+        });
+      }
+
+      function resizeRippleCanvas() {
+        const pixelRatio = Math.max(2, Math.min(window.devicePixelRatio || 1, 2.5));
+        const width = screen.clientWidth;
+        const height = screen.clientHeight;
+
+        rippleCanvas.width = Math.round(width * pixelRatio);
+        rippleCanvas.height = Math.round(height * pixelRatio);
+        rippleCanvas.style.width = `${width}px`;
+        rippleCanvas.style.height = `${height}px`;
+        if (rippleGl) rippleGl.viewport(0, 0, rippleCanvas.width, rippleCanvas.height);
+
+        return { width, height };
+      }
+
+      function clearRipple() {
+        window.cancelAnimationFrame(rippleAnimationFrame);
+        if (rippleGl) {
+          rippleGl.clearColor(0, 0, 0, 0);
+          rippleGl.clear(rippleGl.COLOR_BUFFER_BIT);
+        }
+        screen.classList.remove("is-rippling");
+        if (resolveRippleCompletion) {
+          const resolve = resolveRippleCompletion;
+          resolveRippleCompletion = null;
+          resolve();
+        }
+      }
+
+      function resizeIslandCanvas() {
+        const pixelRatio = Math.min(window.devicePixelRatio || 1, 3);
+        const width = dynamicIsland.clientWidth;
+        const height = dynamicIsland.clientHeight;
+        islandAcceptCanvas.width = Math.round(width * pixelRatio);
+        islandAcceptCanvas.height = Math.round(height * pixelRatio);
+        islandAcceptCanvas.style.width = `${width}px`;
+        islandAcceptCanvas.style.height = `${height}px`;
+        islandAcceptContext.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        return { width, height };
+      }
+
+      function drawIslandAcceptFrame(time = performance.now()) {
+        const { width, height } = resizeIslandCanvas();
+        const t = time * 0.001;
+        const ctx = islandAcceptContext;
+
+        ctx.clearRect(0, 0, width, height);
+        ctx.save();
+        ctx.beginPath();
+        ctx.ellipse(width * 0.5, height * 0.52, width * 0.48, height * 0.49, -0.05, 0, Math.PI * 2);
+        ctx.clip();
+
+        const glow = ctx.createRadialGradient(width * 0.48, height * 0.5, 4, width * 0.48, height * 0.5, width * 0.58);
+        glow.addColorStop(0, "rgba(255,255,255,0.56)");
+        glow.addColorStop(0.45, "rgba(185,230,255,0.2)");
+        glow.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, width, height);
+
+        const waves = [
+          { color: "rgba(90, 225, 255, 0.62)", y: 0.56, amp: 6, speed: 1.2, phase: 0 },
+          { color: "rgba(255, 70, 190, 0.7)", y: 0.58, amp: 5, speed: 1.5, phase: 1.4 },
+          { color: "rgba(255, 255, 255, 0.75)", y: 0.62, amp: 4, speed: 1.7, phase: 2.5 }
+        ];
+
+        waves.forEach((wave) => {
+          ctx.beginPath();
+          for (let x = -8; x <= width + 8; x += 4) {
+            const ratio = x / width;
+            const y =
+              height * wave.y +
+              Math.sin(ratio * Math.PI * 2.4 + t * wave.speed + wave.phase) * wave.amp +
+              Math.sin(ratio * Math.PI * 5.5 - t * 0.7 + wave.phase) * 1.8;
+            if (x === -8) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.lineWidth = 5;
+          ctx.strokeStyle = wave.color;
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = wave.color;
+          ctx.stroke();
+        });
+
+        const band = ctx.createLinearGradient(width * 0.15, height * 0.54, width * 0.84, height * 0.66);
+        band.addColorStop(0, "rgba(255,255,255,0)");
+        band.addColorStop(0.25, "rgba(120,230,255,0.55)");
+        band.addColorStop(0.56, "rgba(255,80,202,0.74)");
+        band.addColorStop(0.84, "rgba(255,255,255,0.5)");
+        band.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.fillStyle = band;
+        ctx.globalAlpha = 0.72 + Math.sin(t * 2.3) * 0.08;
+        ctx.fillRect(width * 0.08, height * 0.5, width * 0.84, height * 0.16);
+
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = "rgba(255,255,255,0.5)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(width * 0.49, height * 0.53, width * 0.43, height * 0.41, -0.08, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+        islandAnimationFrame = window.requestAnimationFrame(drawIslandAcceptFrame);
+      }
+
+      function stopIslandAcceptFrame() {
+        window.cancelAnimationFrame(islandAnimationFrame);
+        islandAnimationFrame = 0;
+        islandAcceptContext.clearRect(0, 0, islandAcceptCanvas.width, islandAcceptCanvas.height);
+      }
+
+      function drawIslandColorVideoFrame(time = performance.now()) {
+        const duration = Number.isFinite(islandColorVideo.duration) ? islandColorVideo.duration : 0;
+        if (duration > 0) {
+          if (!islandColorVideoStart) islandColorVideoStart = time;
+          const cycle = duration * 2;
+          const elapsed = ((time - islandColorVideoStart) / 1000) % cycle;
+          const targetTime = elapsed <= duration ? elapsed : cycle - elapsed;
+          if (Math.abs(islandColorVideo.currentTime - targetTime) > 0.025) {
+            islandColorVideo.currentTime = Math.min(duration - 0.02, Math.max(0, targetTime));
+          }
+        }
+
+        islandColorVideoFrame = window.requestAnimationFrame(drawIslandColorVideoFrame);
+      }
+
+      function startIslandColorVideo() {
+        window.cancelAnimationFrame(islandColorVideoFrame);
+        islandColorVideo.pause();
+        islandColorVideoStart = 0;
+        if (islandColorVideo.readyState >= 1) {
+          drawIslandColorVideoFrame();
+          return;
+        }
+        islandColorVideo.addEventListener("loadedmetadata", () => drawIslandColorVideoFrame(), { once: true });
+        islandColorVideo.load();
+      }
+
+      function hideDynamicIsland() {
+        islandHasShown = false;
+        stopIslandAcceptFrame();
+        gsap.set(dynamicIsland, {
+          autoAlpha: 0,
+          scale: 0.42,
+          y: -10,
+          filter: "blur(4px)",
+          transformOrigin: "50% 30%"
+        });
+        gsap.set(".dynamic-island__avatar", { autoAlpha: 0, scale: 0.6, y: 8 });
+      }
+
+      function showDynamicIsland() {
+        if (islandHasShown) return;
+        islandHasShown = true;
+        resizeIslandCanvas();
+        drawIslandAcceptFrame();
+
+        const tl = gsap.timeline({ defaults: { duration: 0.52, ease: "power3.out" } });
+        tl.fromTo(
+          dynamicIsland,
+          { autoAlpha: 0, scale: 0.42, y: -10, filter: "blur(5px)" },
+          { autoAlpha: 1, scale: 1, y: 0, filter: "blur(0px)" }
+        ).fromTo(
+          ".dynamic-island__avatar",
+          { autoAlpha: 0, scale: 0.56, y: 8 },
+          { autoAlpha: 1, scale: 1, y: 0, duration: 0.34, ease: "back.out(1.4)" },
+          "<0.18"
+        );
+      }
+
+      function rippleClamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function rippleLerp(from, to, amount) {
+        return from + (to - from) * amount;
+      }
+
+      function rippleSmooth(start, end, value) {
+        const amount = rippleClamp((value - start) / (end - start), 0, 1);
+        return amount * amount * (3 - amount * 2);
+      }
+
+      async function waitForRippleSnapshotAssets(snapshotScreen) {
+        const imageTasks = [...snapshotScreen.querySelectorAll("img")].map(async (image) => {
+          if (!image.complete) {
+            await new Promise((resolve) => {
+              image.addEventListener("load", resolve, { once: true });
+              image.addEventListener("error", resolve, { once: true });
+            });
+          }
+          if (typeof image.decode === "function") await image.decode().catch(() => {});
+        });
+        const fontTask = document.fonts?.ready || Promise.resolve();
+        await Promise.all([fontTask, ...imageTasks]);
+      }
+
+      function copyRippleSnapshotScrollPositions(source, clone) {
+        const sourceNodes = source.querySelectorAll("*");
+        const cloneNodes = clone.querySelectorAll("*");
+        sourceNodes.forEach((node, index) => {
+          const cloneNode = cloneNodes[index];
+          if (!cloneNode || (!node.scrollTop && !node.scrollLeft)) return;
+          cloneNode.scrollTop = node.scrollTop;
+          cloneNode.scrollLeft = node.scrollLeft;
+        });
+      }
+
+      async function captureCurrentScreenForRipple() {
+        if (typeof window.html2canvas !== "function") {
+          throw new Error("Current screen capture renderer is unavailable");
+        }
+
+        // 不直接截取被 stage 缩放后的真页面：在相同逻辑尺寸的离屏容器中构造 1:1 副本，
+        // 让动态底图和 WebGL 画布始终使用同一套坐标，避免整张底图提前形变或出现裁切。
+        const width = screen.clientWidth;
+        const height = screen.clientHeight;
+        const snapshotPixelRatio = Math.max(2, Math.min(window.devicePixelRatio || 1, 2.5));
+        const snapshotHost = document.createElement("div");
+        snapshotHost.dataset.rippleSnapshotHost = "true";
+        Object.assign(snapshotHost.style, {
+          position: "fixed",
+          left: "-100000px",
+          top: "0",
+          zIndex: "0",
+          width: `${width}px`,
+          height: `${height}px`,
+          overflow: "hidden",
+          pointerEvents: "none",
+          contain: "layout paint style",
+          transform: "none"
+        });
+
+        const snapshotScreen = screen.cloneNode(true);
+        snapshotScreen.removeAttribute("id");
+        snapshotScreen.dataset.rippleSnapshotScreen = "true";
+        snapshotScreen.classList.remove("is-rippling");
+        Object.assign(snapshotScreen.style, {
+          position: "absolute",
+          inset: "0",
+          width: "auto",
+          height: "auto",
+          transform: "none",
+          animation: "none",
+          transition: "none"
+        });
+        snapshotScreen.querySelector(".ripple-canvas")?.remove();
+        copyRippleSnapshotScrollPositions(screen, snapshotScreen);
+        snapshotHost.appendChild(snapshotScreen);
+        document.body.appendChild(snapshotHost);
+
+        try {
+          await waitForRippleSnapshotAssets(snapshotScreen);
+          const snapshot = await window.html2canvas(snapshotHost, {
+            backgroundColor: window.getComputedStyle(screen).backgroundColor,
+            width,
+            height,
+            scale: snapshotPixelRatio,
+            logging: false,
+            useCORS: false,
+            allowTaint: false,
+            onclone: (clonedDocument) => {
+              const clonedHost = clonedDocument.querySelector('[data-ripple-snapshot-host="true"]');
+              const clonedScreen = clonedHost?.querySelector('[data-ripple-snapshot-screen="true"]');
+              clonedScreen?.classList.remove("is-rippling");
+              clonedScreen?.querySelector(".ripple-canvas")?.remove();
+            }
+          });
+          const expectedWidth = Math.round(width * snapshotPixelRatio);
+          const expectedHeight = Math.round(height * snapshotPixelRatio);
+          if (Math.abs(snapshot.width - expectedWidth) > 1 || Math.abs(snapshot.height - expectedHeight) > 1) {
+            throw new Error("Ripple snapshot dimensions do not match the screen");
+          }
+          return snapshot;
+        } finally {
+          snapshotHost.remove();
+        }
+      }
+
+      function createRippleShader(type, source) {
+        const shader = rippleGl.createShader(type);
+        rippleGl.shaderSource(shader, source);
+        rippleGl.compileShader(shader);
+        if (!rippleGl.getShaderParameter(shader, rippleGl.COMPILE_STATUS)) {
+          throw new Error(rippleGl.getShaderInfoLog(shader) || "Ripple shader compile failed");
+        }
+        return shader;
+      }
+
+      function initRippleGl() {
+        if (!rippleGl || rippleProgram) return;
+
+        const vertexShader = createRippleShader(
+          rippleGl.VERTEX_SHADER,
+          `
+            attribute vec2 a_position;
+            attribute vec2 a_texCoord;
+            varying vec2 v_texCoord;
+            void main() {
+              gl_Position = vec4(a_position, 0.0, 1.0);
+              v_texCoord = a_texCoord;
+            }
+          `
+        );
+
+        const fragmentShader = createRippleShader(
+          rippleGl.FRAGMENT_SHADER,
+          `
+            precision highp float;
+            uniform sampler2D u_image;
+            uniform vec2 u_resolution;
+            uniform float u_time;
+            uniform float u_duration;
+            uniform float u_fadeDuration;
+            uniform float u_wavelength;
+            uniform float u_decay;
+            uniform float u_maxAmplitude;
+            uniform float u_ringTrail;
+            varying vec2 v_texCoord;
+
+            float saturate(float value) {
+              return clamp(value, 0.0, 1.0);
+            }
+
+            void main() {
+              float totalDuration = u_duration + u_fadeDuration;
+              if (u_time > totalDuration) {
+                discard;
+              }
+
+              float fade = 1.0;
+              if (u_time > u_duration) {
+                fade = 1.0 - saturate((u_time - u_duration) / max(u_fadeDuration, 0.001));
+              }
+
+              float progress = saturate(u_time / u_duration);
+              float aspect = u_resolution.x / u_resolution.y;
+              vec2 coord = vec2(v_texCoord.x * aspect, v_texCoord.y);
+              vec2 origin = vec2(0.5 * aspect, 1.0);
+              vec2 delta = coord - origin;
+              float distanceToOrigin = length(delta);
+              vec2 normal = distanceToOrigin > 0.0001 ? delta / distanceToOrigin : vec2(0.0, -1.0);
+
+              float maxRadius = length(vec2(0.5 * aspect, 1.0));
+              float wavelength = u_wavelength;
+              float ringWidth = wavelength * 1.8;
+              float softEdge = wavelength * 0.12;
+              float trailLength = u_ringTrail;
+              float waveFront = progress * (maxRadius + trailLength);
+              float activeStart = max(0.0, waveFront - trailLength);
+              float activeEnd = waveFront + ringWidth;
+              float inRange = step(activeStart, distanceToOrigin) * step(distanceToOrigin, activeEnd);
+
+              float waveDistance = waveFront - distanceToOrigin;
+              float tailProgress = saturate(waveDistance / max(trailLength, 0.001));
+              float envelope = exp(-u_decay * tailProgress) * fade;
+              float wave = sin((waveDistance / wavelength) * 6.28318530718);
+              float bandCenter = abs(mod(waveDistance, wavelength) - wavelength * 0.5);
+              float band = saturate(1.0 - bandCenter / max(ringWidth * 0.5, 0.001));
+              band = smoothstep(0.0, 1.0, band);
+              float displacement = wave * u_maxAmplitude * envelope * (0.24 + band * 0.50) * inRange;
+              vec2 uvOffset = vec2(normal.x / aspect, normal.y) * displacement;
+
+              vec2 sampleUv = clamp(v_texCoord - uvOffset, vec2(0.001), vec2(0.999));
+              vec3 base = texture2D(u_image, sampleUv).rgb;
+
+              float caustic = inRange * band * envelope;
+              vec2 chromaOffset = vec2(normal.x / aspect, normal.y) * u_maxAmplitude * 0.16 * caustic;
+              float red = texture2D(u_image, clamp(sampleUv - chromaOffset * 0.35, vec2(0.001), vec2(0.999))).r;
+              float blue = texture2D(u_image, clamp(sampleUv + chromaOffset * 0.40, vec2(0.001), vec2(0.999))).b;
+              vec3 refracted = vec3(red, base.g, blue);
+
+              float ringGlow = inRange * caustic * 0.055;
+              float crest = smoothstep(0.86, 1.0, band) * inRange * envelope * 0.055;
+              vec3 color = mix(base, refracted, inRange * band * 0.22);
+              color += vec3(1.0) * ringGlow;
+              color += vec3(0.82, 0.93, 1.0) * crest * 0.22;
+              color += vec3(1.0, 0.92, 0.82) * crest * 0.12;
+
+              gl_FragColor = vec4(color, fade);
+            }
+          `
+        );
+
+        rippleProgram = rippleGl.createProgram();
+        rippleGl.attachShader(rippleProgram, vertexShader);
+        rippleGl.attachShader(rippleProgram, fragmentShader);
+        rippleGl.linkProgram(rippleProgram);
+        if (!rippleGl.getProgramParameter(rippleProgram, rippleGl.LINK_STATUS)) {
+          throw new Error(rippleGl.getProgramInfoLog(rippleProgram) || "Ripple shader link failed");
+        }
+
+        ripplePositionBuffer = rippleGl.createBuffer();
+        rippleGl.bindBuffer(rippleGl.ARRAY_BUFFER, ripplePositionBuffer);
+        rippleGl.bufferData(
+          rippleGl.ARRAY_BUFFER,
+          new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]),
+          rippleGl.STATIC_DRAW
+        );
+
+        rippleTexcoordBuffer = rippleGl.createBuffer();
+        rippleGl.bindBuffer(rippleGl.ARRAY_BUFFER, rippleTexcoordBuffer);
+        rippleGl.bufferData(
+          rippleGl.ARRAY_BUFFER,
+          new Float32Array([0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0]),
+          rippleGl.STATIC_DRAW
+        );
+
+        rippleLocations = {
+          position: rippleGl.getAttribLocation(rippleProgram, "a_position"),
+          texCoord: rippleGl.getAttribLocation(rippleProgram, "a_texCoord"),
+          image: rippleGl.getUniformLocation(rippleProgram, "u_image"),
+          resolution: rippleGl.getUniformLocation(rippleProgram, "u_resolution"),
+          time: rippleGl.getUniformLocation(rippleProgram, "u_time"),
+          duration: rippleGl.getUniformLocation(rippleProgram, "u_duration"),
+          fadeDuration: rippleGl.getUniformLocation(rippleProgram, "u_fadeDuration"),
+          wavelength: rippleGl.getUniformLocation(rippleProgram, "u_wavelength"),
+          decay: rippleGl.getUniformLocation(rippleProgram, "u_decay"),
+          maxAmplitude: rippleGl.getUniformLocation(rippleProgram, "u_maxAmplitude"),
+          ringTrail: rippleGl.getUniformLocation(rippleProgram, "u_ringTrail")
+        };
+
+        rippleTexture = rippleGl.createTexture();
+        rippleGl.bindTexture(rippleGl.TEXTURE_2D, rippleTexture);
+        rippleGl.texParameteri(rippleGl.TEXTURE_2D, rippleGl.TEXTURE_WRAP_S, rippleGl.CLAMP_TO_EDGE);
+        rippleGl.texParameteri(rippleGl.TEXTURE_2D, rippleGl.TEXTURE_WRAP_T, rippleGl.CLAMP_TO_EDGE);
+        rippleGl.texParameteri(rippleGl.TEXTURE_2D, rippleGl.TEXTURE_MIN_FILTER, rippleGl.LINEAR);
+        rippleGl.texParameteri(rippleGl.TEXTURE_2D, rippleGl.TEXTURE_MAG_FILTER, rippleGl.LINEAR);
+        rippleGl.disable(rippleGl.DEPTH_TEST);
+        rippleGl.disable(rippleGl.CULL_FACE);
+        rippleGl.enable(rippleGl.BLEND);
+        rippleGl.blendFunc(rippleGl.SRC_ALPHA, rippleGl.ONE_MINUS_SRC_ALPHA);
+      }
+
+      function uploadRippleTexture(image) {
+        initRippleGl();
+        rippleGl.bindTexture(rippleGl.TEXTURE_2D, rippleTexture);
+        rippleGl.pixelStorei(rippleGl.UNPACK_FLIP_Y_WEBGL, false);
+        rippleGl.texImage2D(rippleGl.TEXTURE_2D, 0, rippleGl.RGBA, rippleGl.RGBA, rippleGl.UNSIGNED_BYTE, image);
+      }
+
+      function drawRippleFrame() {
+        const width = screen.clientWidth;
+        const height = screen.clientHeight;
+        const elapsed = (performance.now() - rippleStartTime) / 1000;
+
+        if (elapsed > aiKeyAnim.duration) {
+          clearRipple({ completed: true });
+          return;
+        }
+
+        if (!rippleGl || !rippleProgram) {
+          clearRipple({ completed: true });
+          return;
+        }
+
+        rippleGl.viewport(0, 0, rippleCanvas.width, rippleCanvas.height);
+        rippleGl.clearColor(0, 0, 0, 0);
+        rippleGl.clear(rippleGl.COLOR_BUFFER_BIT);
+        rippleGl.useProgram(rippleProgram);
+
+        rippleGl.bindBuffer(rippleGl.ARRAY_BUFFER, ripplePositionBuffer);
+        rippleGl.enableVertexAttribArray(rippleLocations.position);
+        rippleGl.vertexAttribPointer(rippleLocations.position, 2, rippleGl.FLOAT, false, 0, 0);
+
+        rippleGl.bindBuffer(rippleGl.ARRAY_BUFFER, rippleTexcoordBuffer);
+        rippleGl.enableVertexAttribArray(rippleLocations.texCoord);
+        rippleGl.vertexAttribPointer(rippleLocations.texCoord, 2, rippleGl.FLOAT, false, 0, 0);
+
+        rippleGl.activeTexture(rippleGl.TEXTURE0);
+        rippleGl.bindTexture(rippleGl.TEXTURE_2D, rippleTexture);
+        rippleGl.uniform1i(rippleLocations.image, 0);
+        rippleGl.uniform2f(rippleLocations.resolution, width, height);
+        rippleGl.uniform1f(rippleLocations.time, elapsed);
+        rippleGl.uniform1f(rippleLocations.duration, aiKeyAnim.duration);
+        rippleGl.uniform1f(rippleLocations.fadeDuration, aiKeyAnim.fadeDuration);
+        rippleGl.uniform1f(rippleLocations.wavelength, aiKeyAnim.wavelength);
+        rippleGl.uniform1f(rippleLocations.decay, aiKeyAnim.decay);
+        rippleGl.uniform1f(rippleLocations.maxAmplitude, aiKeyAnim.maxAmplitude);
+        rippleGl.uniform1f(rippleLocations.ringTrail, aiKeyAnim.ringTrail);
+        rippleGl.drawArrays(rippleGl.TRIANGLES, 0, 6);
+
+        rippleAnimationFrame = window.requestAnimationFrame(drawRippleFrame);
+      }
+
+      function startAiKeyRipple(snapshot) {
+        concealDynamicIsland();
+        clearRipple();
+        resizeRippleCanvas();
+        if (!snapshot) throw new Error("Current screen snapshot is unavailable");
+        rippleSnapshotImage = snapshot;
+        uploadRippleTexture(rippleSnapshotImage);
+        rippleStartTime = performance.now();
+        screen.classList.add("is-rippling");
+        return new Promise((resolve) => {
+          resolveRippleCompletion = resolve;
+          drawRippleFrame();
+        });
+      }
+
+      const answerContent = `这里是蓝色清真寺（Sultanahmet Camii），正式名称为苏丹艾哈迈德清真寺，是伊斯坦布尔的地标，奥斯曼古典建筑的巅峰，因内部海量蓝色瓷砖而俗称“蓝色清真寺”。
+📸 打卡亮点
+六塔传奇：全世唯一拥有六座宣礼塔的清真寺，象征权力的野心与神的对话
+蓝瓷密码：穹顶手绘2万+片蓝釉瓷，每一片都藏着郁金香与石榴的波斯咒语
+光影魔法：清晨9点或傍晚5点，斜射的光柱会让蓝色幻化成薰衣草紫
+🎫 免费入场：非礼拜时间开放，需要脱鞋，女士要包头巾
+💁🏻‍♂️ 开放时间：8:30-18:30（周五13:30后开放）
+🚇 交通：T1电车 Sultanahmet 站步行3分钟`;
+      const answerContentFigma = [
+        "这里是蓝色清真寺（Sultanahmet Camii），正式名称为苏丹艾哈迈德清真寺，是伊斯坦布尔的地标，奥斯曼古典建筑的巅峰，因内部海量蓝色瓷砖而俗称 “蓝色清真寺”。",
+        "📸 打卡亮点",
+        "• 六塔传奇：全世唯一拥有六座宣礼塔的清真寺，象征权力的野心与神的对话",
+        "• 蓝瓷密码：穹顶手绘2万+片蓝釉瓷，每一片都藏着郁金香与石榴的波斯咒语",
+        "• 光影魔法：清晨9点或傍晚5点，斜射的光柱会让蓝色幻化成薰衣草紫",
+        "🎫 免费入场：（非礼拜时间开放）需要脱鞋，入内有放鞋的柜子，女士要包头巾，门口可租借，能包住头发的帽子也可",
+        "💁🏻‍♂️ 开放时间：8:30-18:30（周五13:30后开放）",
+        "🚇 交通：T1电车Sultanahmet站步行3分钟"
+      ].join("\n");
+      const quranAnswerContent = [
+        "“古兰” 是阿拉伯语 Qur'an 音译，本义为诵读、宣读，旧译《可兰经》《古尔阿尼》，是伊斯兰教唯一根本经典，穆斯林视其为真主（安拉）通过天使吉卜利勒降示给先知穆罕默德的天启启示。",
+        "核心主张认主独一，规范礼拜、斋戒等宗教义务，倡导行善、诚信、善待弱者，也包含伦理、律法与历代先知故事。原文为阿拉伯文，是伊斯兰信仰与生活的最高准则。",
+        "原版为古典阿拉伯语，各国通行官方汉译版本供华语穆斯林研读；",
+        "穆斯林视《古兰经》为圣物，存放、诵读、携带皆有洁净礼仪；",
+        "伊斯兰教认为此前真主降示给先知的经典（《讨拉特》《引支勒》等）原文失传、遭人为篡改，唯有《古兰经》原文完整保真。"
+      ].join("\n");
+
+      function wait(ms, callback) {
+        const timer = window.setTimeout(callback, ms);
+        demoTimers.push(timer);
+        return timer;
+      }
+
+      function clearDemoTimers() {
+        demoTimers.forEach((timer) => window.clearTimeout(timer));
+        demoTimers = [];
+        window.clearTimeout(answerTypeTimer);
+        window.cancelAnimationFrame(gestureAnimationFrame);
+        if (gestureStrokeAnimation) gestureStrokeAnimation.cancel();
+      }
+
+      function easeInOut(value) {
+        return value < 0.5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2;
+      }
+
+      function resetGesturePath() {
+        gestureLasso.setAttribute("d", "");
+        textGestureLasso.setAttribute("d", "");
+        saveStarPath.setAttribute("d", "");
+        gestureLasso.style.strokeDasharray = "";
+        gestureLasso.style.strokeDashoffset = "";
+        textGestureLasso.style.strokeDasharray = "";
+        textGestureLasso.style.strokeDashoffset = "";
+        saveStarPath.style.strokeDasharray = "";
+        saveStarPath.style.strokeDashoffset = "";
+        gesturePoints = [];
+        return 0;
+      }
+
+      function pointFromEvent(event) {
+        const rect = gestureLayer.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 484;
+        const y = ((event.clientY - rect.top) / rect.height) * 780;
+        return { x, y };
+      }
+
+      function screenPointFromEvent(event) {
+        const rect = screen.getBoundingClientRect();
+        const scaleX = rect.width / screen.clientWidth;
+        const scaleY = rect.height / screen.clientHeight;
+        return {
+          x: (event.clientX - rect.left) / scaleX,
+          y: (event.clientY - rect.top) / scaleY
+        };
+      }
+
+      function isGalleryPoint(point) {
+        return point.x >= 0 && point.x <= 484 && point.y >= 0 && point.y <= 780;
+      }
+
+      function rectToScreenLocal(rect) {
+        const screenRect = screen.getBoundingClientRect();
+        const scaleX = screenRect.width / screen.clientWidth;
+        const scaleY = screenRect.height / screen.clientHeight;
+        return {
+          left: (rect.left - screenRect.left) / scaleX,
+          top: (rect.top - screenRect.top) / scaleY,
+          width: rect.width / scaleX,
+          height: rect.height / scaleY,
+          right: (rect.right - screenRect.left) / scaleX,
+          bottom: (rect.bottom - screenRect.top) / scaleY
+        };
+      }
+
+      function quranTargetRect() {
+        return rectToScreenLocal(quranTarget.getBoundingClientRect());
+      }
+
+      function isNearQuranTarget(event) {
+        const targetRect = quranTarget.getBoundingClientRect();
+        const screenRect = screen.getBoundingClientRect();
+        if (
+          targetRect.bottom < screenRect.top ||
+          targetRect.top > screenRect.bottom ||
+          targetRect.right < screenRect.left ||
+          targetRect.left > screenRect.right
+        ) {
+          return false;
+        }
+
+        const expandX = 130;
+        const expandY = 90;
+        return (
+          event.clientX >= targetRect.left - expandX &&
+          event.clientX <= targetRect.right + expandX &&
+          event.clientY >= targetRect.top - expandY &&
+          event.clientY <= targetRect.bottom + expandY
+        );
+      }
+
+      function placeQuranSelectionFrame() {
+        const targetRect = quranTargetRect();
+        const innerX = 130 / 522;
+        const innerY = 106 / 315;
+        const innerW = 258 / 522;
+        const innerH = 101 / 315;
+        const innerPadX = 0;
+        const innerPadY = 5;
+        const desiredInnerWidth = targetRect.width + innerPadX * 2;
+        const desiredInnerHeight = Math.max(34, targetRect.height + innerPadY * 2);
+        const frameWidth = desiredInnerWidth / innerW;
+        const frameHeight = desiredInnerHeight / innerH;
+        const frameLeft = targetRect.left - innerPadX - frameWidth * innerX;
+        const frameTop = targetRect.top - innerPadY - frameHeight * innerY;
+        quranSelectionFrame.style.left = `${frameLeft}px`;
+        quranSelectionFrame.style.top = `${frameTop}px`;
+        quranSelectionFrame.style.width = `${frameWidth}px`;
+        quranSelectionFrame.style.height = `${frameHeight}px`;
+      }
+
+      function placeQuranSelectionScrim() {
+        const targetRect = quranTargetRect();
+        quranSelectionScrim.style.left = `${targetRect.left}px`;
+        quranSelectionScrim.style.top = `${targetRect.top}px`;
+        quranSelectionScrim.style.width = `${targetRect.width}px`;
+        quranSelectionScrim.style.height = `${targetRect.height}px`;
+      }
+
+      function placeQuranListeningUi() {
+        const targetRect = quranTargetRect();
+        const controlsWidth = 392;
+        const controlLeft = Math.max(22, Math.min(targetRect.left - 12, screen.clientWidth - controlsWidth - 16));
+        const recommendTop = Math.max(116, Math.min(targetRect.top - 130, screen.clientHeight - 154));
+        quranListeningUi.style.setProperty("--quran-control-left", `${controlLeft}px`);
+        quranListeningUi.style.setProperty("--quran-recommend-top", `${recommendTop}px`);
+      }
+
+      function playQuranListeningEntrance() {
+        if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          gsap.set(quranListeningFrost, { autoAlpha: 1, y: 0 });
+          gsap.set(quranListeningHalo, { autoAlpha: 1, y: 0 });
+          gsap.set(quranListeningLightEntrance, { autoAlpha: 1, y: 0 });
+          gsap.set(quranListeningControls, { autoAlpha: 1, y: 0 });
+          return;
+        }
+
+        const entrance = { duration: 0.56, ease: "power3.out", overwrite: "auto" };
+
+        gsap.fromTo(quranListeningFrost, { autoAlpha: 0, y: 48 }, { ...entrance, autoAlpha: 1, y: 0 });
+        gsap.fromTo(quranListeningHalo, { autoAlpha: 0, y: 48 }, { ...entrance, autoAlpha: 1, y: 0 });
+        gsap.fromTo(quranListeningLightEntrance, { autoAlpha: 0, y: 48 }, { ...entrance, autoAlpha: 1, y: 0 });
+        gsap.fromTo(quranListeningControls, { autoAlpha: 0, y: 48 }, { ...entrance, autoAlpha: 1, y: 0 });
+      }
+
+      function showQuranListeningUi() {
+        placeQuranSelectionScrim();
+        placeQuranSelectionFrame();
+        placeQuranListeningUi();
+        quranSelectionFrame.classList.add("is-visible");
+        quranListeningUi.classList.add("is-visible");
+        screen.classList.add("has-quran-selection", "is-quran-listening");
+        playQuranListeningEntrance();
+      }
+
+      function hideQuranListeningUi() {
+        quranListeningUi.classList.remove("is-visible");
+        screen.classList.remove("is-quran-listening");
+      }
+
+      function dismissQuranSelection() {
+        window.clearTimeout(answerTypeTimer);
+        hideQuranListeningUi();
+        screen.classList.remove("is-answering", "has-quran-selection");
+        quranSelectionFrame.classList.remove("is-visible");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.style.height = "0px";
+        quranAnswerText.textContent = "";
+        resetGesturePath();
+      }
+
+      function isInteractiveTarget(target) {
+        return (
+          target instanceof Element &&
+          Boolean(
+            target.closest(
+              'button, a[href], input, select, textarea, [role="button"], [contenteditable="true"]'
+            )
+          )
+        );
+      }
+
+      function dismissActiveSelection() {
+        const hasActiveSelection =
+          screen.classList.contains("has-selection") ||
+          screen.classList.contains("has-quran-selection") ||
+          screen.classList.contains("is-quran-listening");
+
+        if (!hasActiveSelection) return false;
+
+        // Cancel any queued selection follow-up before returning control to the page.
+        clearDemoTimers();
+        drawPointerId = null;
+        gestureMode = null;
+        screen.classList.remove(
+          "is-answering",
+          "is-drawing",
+          "is-text-drawing",
+          "is-star-drawing",
+          "has-selection",
+          "has-quran-selection",
+          "is-quran-listening"
+        );
+        hideQuranListeningUi();
+        quranSelectionFrame.classList.remove("is-visible");
+        aiAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        aiAnswerPanel.style.height = "0px";
+        quranAnswerPanel.style.height = "0px";
+        aiAnswerText.textContent = "";
+        quranAnswerText.textContent = "";
+        resetGesturePath();
+        touchCursorVisible = false;
+        document.body.classList.remove("is-touch-cursor-active");
+        touchCursor.classList.remove("is-visible", "is-pressed");
+
+        // Selection is transient; keep the AI companion available for the next action.
+        setAiCompanionState("active");
+        return true;
+      }
+
+      function measureQuranAnswerPanelHeight() {
+        const panelWidth = 382;
+        const panelMaxHeight = 700;
+        const bottomReserve = 40;
+        const measurementPanel = quranAnswerPanel.cloneNode(false);
+        const measurementTitle = quranAnswerPanel.querySelector(".quran-answer-title").cloneNode(true);
+        const measurementText = quranAnswerText.cloneNode(false);
+        measurementPanel.removeAttribute("id");
+        measurementText.removeAttribute("id");
+        quranAnswerContent.split("\n").forEach((line) => {
+          const textLine = document.createElement("span");
+          textLine.className = "answer-line";
+          textLine.textContent = line;
+          measurementText.appendChild(textLine);
+        });
+        Object.assign(measurementPanel.style, {
+          position: "fixed",
+          left: "-100000px",
+          top: "0",
+          display: "block",
+          width: `${panelWidth}px`,
+          height: "auto",
+          maxHeight: "none",
+          minHeight: "0",
+          padding: `20px 24px ${bottomReserve}px`,
+          overflow: "visible",
+          visibility: "hidden",
+          opacity: "0",
+          transform: "none",
+          transition: "none"
+        });
+        measurementPanel.append(measurementTitle, measurementText);
+        document.body.appendChild(measurementPanel);
+        const height = Math.ceil(measurementText.offsetTop + measurementText.scrollHeight + bottomReserve);
+        measurementPanel.remove();
+        return Math.min(panelMaxHeight, Math.max(96, height));
+      }
+
+      function placeQuranAnswerPanel(finalHeight = measureQuranAnswerPanelHeight()) {
+        const targetRect = quranTargetRect();
+        const panelWidth = 382;
+        const targetCenter = targetRect.top + targetRect.height / 2;
+        const left = Math.max(28, Math.min(targetRect.left - panelWidth - 18, screen.clientWidth - panelWidth - 24));
+        // 顶部在生成前一次性确定；最终卡片中心与“古兰经”圈选文字中心保持同一水平线。
+        const top = Math.max(74, Math.min(targetCenter - finalHeight / 2, screen.clientHeight - finalHeight - 28));
+        quranAnswerPanel.style.left = `${left}px`;
+        quranAnswerPanel.style.top = `${top}px`;
+      }
+
+      function updateGesturePath() {
+        const pathElement = gestureMode === "quran" ? textGestureLasso : gestureLasso;
+        if (!gesturePoints.length) {
+          pathElement.setAttribute("d", "");
+          return;
+        }
+
+        const [first, ...rest] = gesturePoints;
+        const path = [`M${first.x.toFixed(1)} ${first.y.toFixed(1)}`];
+        rest.forEach((point) => path.push(`L${point.x.toFixed(1)} ${point.y.toFixed(1)}`));
+        pathElement.setAttribute("d", path.join(" "));
+      }
+
+      function gestureMetrics() {
+        if (gesturePoints.length < 2) {
+          return { distance: 0, closeDistance: Infinity, width: 0, height: 0 };
+        }
+
+        let distance = 0;
+        let minX = Infinity;
+        let maxX = -Infinity;
+        let minY = Infinity;
+        let maxY = -Infinity;
+
+        gesturePoints.forEach((point, index) => {
+          minX = Math.min(minX, point.x);
+          maxX = Math.max(maxX, point.x);
+          minY = Math.min(minY, point.y);
+          maxY = Math.max(maxY, point.y);
+
+          if (index > 0) {
+            const previous = gesturePoints[index - 1];
+            distance += Math.hypot(point.x - previous.x, point.y - previous.y);
+          }
+        });
+
+        const first = gesturePoints[0];
+        const last = gesturePoints[gesturePoints.length - 1];
+        return {
+          distance,
+          closeDistance: Math.hypot(last.x - first.x, last.y - first.y),
+          width: maxX - minX,
+          height: maxY - minY
+        };
+      }
+
+      function isCompletedCircleGesture() {
+        const metrics = gestureMetrics();
+        const size = Math.max(metrics.width, metrics.height);
+        if (gestureMode === "quran") {
+          return (
+            gesturePoints.length >= 10 &&
+            metrics.distance >= 120 &&
+            metrics.width >= 44 &&
+            metrics.height >= 22 &&
+            metrics.closeDistance <= Math.max(56, size * 0.72)
+          );
+        }
+
+        return (
+          gesturePoints.length >= 18 &&
+          metrics.distance >= 560 &&
+          metrics.width >= 150 &&
+          metrics.height >= 150 &&
+          metrics.closeDistance <= Math.max(150, size * 0.42)
+        );
+      }
+
+      function beginUserGesture(event, { skipGalleryGate = false } = {}) {
+        // 底部伴随条自身负责点击进入语音问答，避免画圈手势的捕获阶段吞掉 click。
+        if (aiCompanion.contains(event.target)) return;
+        if (quranListeningUi.contains(event.target)) {
+          if (!isInteractiveTarget(event.target) && dismissActiveSelection()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          return;
+        }
+
+        if (dismissCompletedAnswer()) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        if (dismissActiveSelection()) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        if (isInteractiveTarget(event.target)) return;
+
+        // 所有圈画能力仅在天禧伴随态（彩色底 bar）中开启。
+        if (!aiCompanion.classList.contains("is-active")) return;
+
+        // Before the recognition slide, resolve the gesture by direction so
+        // the first image remains swipeable. On slide two, start image
+        // selection immediately: a lasso often begins horizontally, so it
+        // must not be mistaken for a carousel swipe.
+        if (!skipGalleryGate && slides.contains(event.target) && currentSlide !== targetSlideIndex) {
+          galleryGesture = {
+            pointerId: event.pointerId,
+            startX: event.clientX,
+            startY: event.clientY,
+            mode: "pending"
+          };
+          return;
+        }
+
+        const quranGesture = isNearQuranTarget(event) && !screen.classList.contains("is-listening");
+        const point = quranGesture ? screenPointFromEvent(event) : pointFromEvent(event);
+        if (
+          (!quranGesture && (currentSlide !== targetSlideIndex || !isGalleryPoint(point))) ||
+          screen.classList.contains("is-listening")
+        ) {
+          return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+        clearDemoTimers();
+        window.clearTimeout(answerTypeTimer);
+        stopIslandAcceptFrame();
+        gestureMode = quranGesture ? "quran" : "image";
+        screen.classList.remove("is-answering", "has-selection", "has-quran-selection");
+        hideQuranListeningUi();
+        screen.classList.toggle("is-drawing", gestureMode === "image");
+        screen.classList.toggle("is-text-drawing", gestureMode === "quran");
+        voiceTranscript.classList.remove("is-visible");
+        quranSelectionFrame.classList.remove("is-visible");
+        aiAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        aiAnswerPanel.style.height = "0px";
+        quranAnswerPanel.style.height = "0px";
+        aiAnswerText.classList.remove("is-typing");
+        quranAnswerText.classList.remove("is-typing");
+        aiAnswerText.textContent = "";
+        quranAnswerText.textContent = "";
+        // 图片收藏全程保持顶部无胶囊，避免遮挡圈选内容。
+        concealDynamicIsland();
+        updateTouchCursor(event);
+        setTouchCursorPressed(true);
+        isDragging = false;
+        drawPointerId = event.pointerId;
+        gesturePoints = [point];
+        updateGesturePath();
+        screen.setPointerCapture(drawPointerId);
+      }
+
+      function continueUserGesture(event) {
+        if (galleryGesture?.pointerId === event.pointerId) {
+          const deltaX = event.clientX - galleryGesture.startX;
+          const deltaY = event.clientY - galleryGesture.startY;
+
+          if (galleryGesture.mode === "pending" && Math.hypot(deltaX, deltaY) >= 12) {
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+              galleryGesture.mode = "swiping";
+            } else {
+              galleryGesture = null;
+              beginUserGesture(event, { skipGalleryGate: true });
+            }
+          }
+
+          if (galleryGesture?.mode === "swiping") return;
+        }
+
+        if (event.pointerId !== drawPointerId) return;
+
+        event.preventDefault();
+        const point = gestureMode === "quran" ? screenPointFromEvent(event) : pointFromEvent(event);
+        updateTouchCursor(event);
+        const previous = gesturePoints[gesturePoints.length - 1];
+        if (!previous || Math.hypot(point.x - previous.x, point.y - previous.y) >= 4) {
+          gesturePoints.push(point);
+          updateGesturePath();
+        }
+      }
+
+      function finishUserGesture(event) {
+        if (galleryGesture?.pointerId === event.pointerId) {
+          galleryGesture = null;
+          return;
+        }
+
+        if (event.pointerId !== drawPointerId) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        try {
+          screen.releasePointerCapture(drawPointerId);
+        } catch (error) {}
+        drawPointerId = null;
+        setTouchCursorPressed(false);
+        screen.classList.remove("is-drawing", "is-text-drawing");
+
+        if (!isCompletedCircleGesture()) {
+          screen.classList.remove("has-selection", "has-quran-selection");
+          gestureMode = null;
+          resetGesturePath();
+          return;
+        }
+
+        if (gestureMode === "quran") {
+          resetGesturePath();
+          touchCursorVisible = false;
+          document.body.classList.remove("is-touch-cursor-active");
+          touchCursor.classList.remove("is-visible", "is-pressed");
+          concealDynamicIsland();
+          showQuranListeningUi();
+          gestureMode = null;
+          return;
+        }
+
+        screen.classList.add("has-selection");
+        resetGesturePath();
+        gestureMode = null;
+        wait(500, startImageSaveSequence);
+      }
+
+      function startImageSaveSequence(playbackSlowdown = 1) {
+        // Figma 节点 242:5034 的连续笔迹：保留原始贝塞尔曲线，而非用直线拼接规则五角星。
+        // 将整条路径左移 140px，使其落在文章前段的目标文本区域。
+        const figmaStarPath = [
+          "M602.0000 327.9197",
+          "C587.1667 373.2531 562.8000 462.0200 584.0000 454.4200",
+          "C610.5000 444.9200 659.0000 379.9197 660.0000 374.9197",
+          "C661.0000 369.9197 546.0000 384.4197 542.5000 389.9197",
+          "C539.0000 395.4197 647.0000 469.4197 660.0000 454.4197",
+          "C673.0000 439.4197 602.0000 320.4197 602.0000 327.9197"
+        ].join(" ");
+        saveStarPath.setAttribute("d", figmaStarPath);
+        screen.classList.add("is-star-drawing");
+
+        // 绘制时长加倍，模拟书写速率降低一半。
+        animateTouchAlongPath(saveStarPath, 1760 * playbackSlowdown, () => {
+          touchCursorVisible = false;
+          document.body.classList.remove("is-touch-cursor-active");
+          touchCursor.classList.remove("is-visible", "is-pressed");
+          screen.classList.remove("is-star-drawing", "has-selection");
+          saveStarPath.setAttribute("d", "");
+          showKnowledgeSavedToast();
+        });
+      }
+
+      function showKnowledgeSavedToast() {
+        companionBarLabel.textContent = "已收藏至知识库";
+        setAiCompanionState("saving");
+        wait(3000, () => {
+          companionBarLabel.textContent = "天禧伴随中";
+          setAiCompanionState("active");
+        });
+      }
+
+      function setIslandCompact() {
+        dynamicIsland.classList.remove("is-expanded", "is-playing", "is-listening");
+        dynamicIsland.style.opacity = "1";
+        dynamicIsland.style.visibility = "visible";
+        dynamicIsland.style.filter = "blur(0)";
+        dynamicIsland.style.transform = "translateY(0) scale(1)";
+        stopIslandAcceptFrame();
+        startIslandColorVideo();
+      }
+
+      function dismissCompletedAnswer() {
+        const hasCompletedAnswer =
+          aiAnswerPanel.classList.contains("is-complete") ||
+          quranAnswerPanel.classList.contains("is-complete") ||
+          voiceMemoPanel.classList.contains("is-complete");
+
+        if (!hasCompletedAnswer || screen.classList.contains("is-drawing") || screen.classList.contains("is-text-drawing")) {
+          return false;
+        }
+
+        window.clearTimeout(answerTypeTimer);
+        screen.classList.remove("is-answering", "has-selection", "has-quran-selection");
+        aiAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        voiceMemoPanel.classList.remove("is-visible", "is-complete");
+        quranSelectionFrame.classList.remove("is-visible");
+        hideQuranListeningUi();
+        voiceTranscript.classList.remove("is-visible");
+        aiAnswerPanel.style.height = "0px";
+        quranAnswerPanel.style.height = "0px";
+        voiceMemoPanel.style.height = "0px";
+        aiAnswerText.textContent = "";
+        quranAnswerText.textContent = "";
+        voiceMemoReply.textContent = "";
+        gsap.set(voiceMemoPreview, { autoAlpha: 0, y: 10, scale: 0.98 });
+        resetGesturePath();
+        concealDynamicIsland();
+        return true;
+      }
+
+      function concealDynamicIsland() {
+        dynamicIsland.classList.remove("is-expanded", "is-playing", "is-listening");
+        dynamicIsland.style.opacity = "0";
+        dynamicIsland.style.visibility = "hidden";
+        dynamicIsland.style.filter = "blur(8px)";
+        dynamicIsland.style.transform = "translateY(-10px) scale(0.88)";
+        stopIslandAcceptFrame();
+      }
+
+      function showListeningIsland() {
+        dynamicIsland.classList.remove("is-expanded", "is-playing", "is-listening");
+        dynamicIsland.style.opacity = "1";
+        dynamicIsland.style.visibility = "visible";
+        dynamicIsland.style.filter = "blur(0)";
+        dynamicIsland.style.transform = "translateY(0) scale(1)";
+        screen.classList.add("is-listening");
+        startIslandColorVideo();
+
+        window.requestAnimationFrame(() => {
+          void dynamicIsland.offsetWidth;
+          dynamicIsland.classList.add("is-playing");
+          wait(930, () => dynamicIsland.classList.add("is-listening"));
+        });
+      }
+
+      function hideDynamicIsland() {
+        islandHasShown = false;
+        setIslandCompact();
+      }
+
+      function showDynamicIsland() {
+        showListeningIsland();
+      }
+
+      function animateTouchAlongPath(pathElement, duration, onComplete) {
+        const totalLength = pathElement.getTotalLength();
+        const startTime = performance.now();
+        const previousTransition = touchCursor.style.transition;
+        touchCursorVisible = true;
+        document.body.classList.add("is-touch-cursor-active");
+        touchCursor.style.transition = "opacity 140ms ease";
+        touchCursor.classList.add("is-visible", "is-pressed");
+
+        function drawFrame(now) {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const eased = easeInOut(progress);
+          const point = pathElement.getPointAtLength(totalLength * eased);
+          const screenRect = screen.getBoundingClientRect();
+          const scaleX = screenRect.width / screen.clientWidth;
+          const scaleY = screenRect.height / screen.clientHeight;
+          const clientX = screenRect.left + point.x * scaleX;
+          const clientY = screenRect.top + point.y * scaleY;
+          touchCursor.classList.add("is-visible", "is-pressed");
+          touchCursor.style.left = `${clientX}px`;
+          touchCursor.style.top = `${clientY}px`;
+          pathElement.style.strokeDashoffset = `${totalLength * (1 - eased)}`;
+
+          if (progress < 1) {
+            gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+            return;
+          }
+
+          touchCursor.style.transition = previousTransition;
+          touchCursor.classList.remove("is-pressed");
+          if (onComplete) onComplete();
+        }
+
+        pathElement.style.strokeDasharray = `${totalLength}`;
+        pathElement.style.strokeDashoffset = `${totalLength}`;
+        gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+      }
+
+      function showScriptedCursor(x, y, isPressed = false) {
+        const screenRect = screen.getBoundingClientRect();
+        const scaleX = screenRect.width / screen.clientWidth;
+        const scaleY = screenRect.height / screen.clientHeight;
+        touchCursorVisible = true;
+        document.body.classList.add("is-touch-cursor-active");
+        touchCursor.classList.add("is-visible");
+        touchCursor.classList.toggle("is-pressed", isPressed);
+        touchCursor.style.left = `${screenRect.left + x * scaleX}px`;
+        touchCursor.style.top = `${screenRect.top + y * scaleY}px`;
+      }
+
+      function animateScriptedCursor(points, duration, onComplete) {
+        const segments = points.slice(1).map((point, index) => ({
+          from: points[index],
+          to: point,
+          length: Math.hypot(point.x - points[index].x, point.y - points[index].y)
+        }));
+        const totalLength = segments.reduce((sum, segment) => sum + segment.length, 0) || 1;
+        const startTime = performance.now();
+        touchCursor.style.transition = "opacity 140ms ease";
+
+        function drawFrame(now) {
+          const progress = Math.min(1, (now - startTime) / duration);
+          let remaining = totalLength * easeInOut(progress);
+          let point = points[points.length - 1];
+
+          for (const segment of segments) {
+            if (remaining <= segment.length) {
+              const ratio = segment.length ? remaining / segment.length : 1;
+              point = {
+                x: segment.from.x + (segment.to.x - segment.from.x) * ratio,
+                y: segment.from.y + (segment.to.y - segment.from.y) * ratio
+              };
+              break;
+            }
+            remaining -= segment.length;
+          }
+
+          showScriptedCursor(point.x, point.y, progress < 0.96);
+          if (progress < 1) {
+            gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+            return;
+          }
+
+          touchCursor.classList.remove("is-pressed");
+          if (onComplete) onComplete();
+        }
+
+        gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+      }
+
+      function animateScriptedCursorAlongPath(pathElement, layerElement, duration, onComplete) {
+        const totalLength = pathElement.getTotalLength();
+        const layer = rectToScreenLocal(layerElement.getBoundingClientRect());
+        const viewBox = layerElement.viewBox.baseVal;
+        const scaleX = layer.width / (viewBox.width || layer.width);
+        const scaleY = layer.height / (viewBox.height || layer.height);
+        const startTime = performance.now();
+        touchCursor.style.transition = "opacity 140ms ease";
+        pathElement.style.strokeDasharray = `${totalLength}`;
+        pathElement.style.strokeDashoffset = `${totalLength}`;
+
+        function drawFrame(now) {
+          const progress = Math.min(1, (now - startTime) / duration);
+          const eased = easeInOut(progress);
+          const point = pathElement.getPointAtLength(totalLength * eased);
+          showScriptedCursor(
+            layer.left + point.x * scaleX,
+            layer.top + point.y * scaleY,
+            progress < 0.98
+          );
+          pathElement.style.strokeDashoffset = `${totalLength * (1 - eased)}`;
+
+          if (progress < 1) {
+            gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+            return;
+          }
+
+          touchCursor.classList.remove("is-pressed");
+          if (onComplete) onComplete();
+        }
+
+        gestureAnimationFrame = window.requestAnimationFrame(drawFrame);
+      }
+
+      function beginScriptedDemo() {
+        const runId = ++scriptedDemoRunId;
+        resetDemo();
+        setSlide(0);
+        if (articleScroll) articleScroll.scrollTop = 0;
+        setAiCompanionState("active");
+        return runId;
+      }
+
+      function isCurrentScriptedDemo(runId) {
+        return runId === scriptedDemoRunId;
+      }
+
+      function playScriptedTextSelection(runId) {
+        if (!articleScroll) return;
+
+        const targetScrollTop = Math.max(0, quranTarget.offsetTop - articleScroll.clientHeight * 0.42);
+        animateScriptedCursor([
+          { x: 748, y: 680 },
+          { x: 748, y: 510 },
+          { x: 748, y: 270 }
+        ], slowScriptedDemo(760));
+        articleScroll.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+
+        wait(slowScriptedDemo(860), () => {
+          if (!isCurrentScriptedDemo(runId)) return;
+          const target = quranTargetRect();
+          const paddingX = 19;
+          const paddingY = 16;
+          const left = target.left - paddingX;
+          const top = target.top - paddingY;
+          const right = target.right + paddingX;
+          const bottom = target.bottom + paddingY;
+          textGestureLasso.setAttribute(
+            "d",
+            `M ${left} ${(top + bottom) / 2} C ${left} ${top}, ${right} ${top}, ${right} ${(top + bottom) / 2} C ${right} ${bottom}, ${left} ${bottom}, ${left} ${(top + bottom) / 2}`
+          );
+          screen.classList.add("is-text-drawing");
+          animateTouchAlongPath(textGestureLasso, slowScriptedDemo(820), () => {
+            if (!isCurrentScriptedDemo(runId)) return;
+            screen.classList.remove("is-text-drawing");
+            resetGesturePath();
+            showQuranListeningUi();
+            wait(slowScriptedDemo(620), () => {
+              if (!isCurrentScriptedDemo(runId)) return;
+              const explainAction = rectToScreenLocal(explainQuranButton.getBoundingClientRect());
+              animateScriptedCursor([
+                { x: explainAction.left - 78, y: explainAction.top + explainAction.height / 2 + 34 },
+                { x: explainAction.left + explainAction.width / 2, y: explainAction.top + explainAction.height / 2 }
+              ], slowScriptedDemo(460), () => {
+                if (isCurrentScriptedDemo(runId)) startQuranAnswerTyping(scriptedDemoSlowdown);
+              });
+            });
+          });
+        });
+      }
+
+      function playScriptedImageSelection(runId) {
+        animateScriptedCursor([
+          { x: 410, y: 420 },
+          { x: 285, y: 420 },
+          { x: 136, y: 420 }
+        ], slowScriptedDemo(560));
+        wait(slowScriptedDemo(300), () => {
+          if (isCurrentScriptedDemo(runId)) setSlide(targetSlideIndex);
+        });
+        wait(slowScriptedDemo(700), () => {
+          if (!isCurrentScriptedDemo(runId)) return;
+          gestureLasso.setAttribute(
+            "d",
+            "M 360 184 C 446 214 462 364 418 494 C 375 621 168 656 84 534 C 12 428 44 235 160 185 C 236 151 305 157 360 184"
+          );
+          screen.classList.add("is-drawing");
+          animateScriptedCursorAlongPath(gestureLasso, gestureLayer, slowScriptedDemo(1350), () => {
+            if (!isCurrentScriptedDemo(runId)) return;
+            screen.classList.remove("is-drawing");
+            screen.classList.add("has-selection");
+            wait(slowScriptedDemo(340), () => {
+              if (isCurrentScriptedDemo(runId)) startImageSaveSequence(scriptedDemoSlowdown);
+            });
+          });
+        });
+      }
+
+      function playScriptedVoiceQuestion(runId) {
+        const bar = rectToScreenLocal(aiCompanionBar.getBoundingClientRect());
+        animateScriptedCursor([
+          { x: bar.left - 82, y: bar.top - 42 },
+          { x: bar.left + bar.width / 2, y: bar.top + bar.height / 2 }
+        ], slowScriptedDemo(480), () => {
+          if (isCurrentScriptedDemo(runId)) startVoiceQuestion(scriptedDemoSlowdown);
+        });
+      }
+
+      function playScriptedDemoStep(step) {
+        if (step === 0) {
+          scriptedDemoRunId += 1;
+          resetDemo();
+          setSlide(0);
+          if (articleScroll) articleScroll.scrollTop = 0;
+          return;
+        }
+
+        const runId = beginScriptedDemo();
+        if (step === 1) playScriptedTextSelection(runId);
+        if (step === 2) playScriptedImageSelection(runId);
+        if (step === 3) playScriptedVoiceQuestion(runId);
+      }
+
+      function startAnswerTyping() {
+        screen.classList.remove("is-listening");
+        screen.classList.add("is-answering");
+        concealDynamicIsland();
+        aiAnswerPanel.style.height = "0px";
+        aiAnswerPanel.classList.remove("is-complete");
+        aiAnswerPanel.classList.add("is-visible");
+        aiAnswerText.textContent = "";
+
+        window.requestAnimationFrame(() => {
+          updateAnswerPanelHeight();
+          streamAnswerChunks(buildAnswerChunks());
+        });
+      }
+
+      // 默认识屏链路：侧键唤醒后，语音球先在顶部反馈，再展开为顶部回答卡片。
+      // 复用手势页原有的灵动岛、流式文本和回答卡片，不引入新的视觉样式。
+      function startAwakeAnswerTyping() {
+        screen.classList.remove("is-listening");
+        screen.classList.add("is-answering");
+        concealDynamicIsland();
+        aiAnswerPanel.style.left = "526px";
+        aiAnswerPanel.style.top = "72px";
+        aiAnswerPanel.style.height = "0px";
+        aiAnswerPanel.classList.remove("is-complete");
+        aiAnswerPanel.classList.add("is-visible");
+        aiAnswerText.textContent = "";
+
+        window.requestAnimationFrame(() => {
+          updateAnswerPanelHeight();
+          streamAnswerChunks(buildAnswerChunks());
+        });
+      }
+
+      function startQuranAnswerTyping(playbackSlowdown = 1) {
+        hideQuranListeningUi();
+        screen.classList.add("is-answering");
+        placeQuranAnswerPanel(measureQuranAnswerPanelHeight());
+        quranAnswerPanel.style.height = "0px";
+        quranAnswerPanel.classList.remove("is-complete");
+        quranAnswerPanel.classList.add("is-visible");
+        quranAnswerText.textContent = "";
+
+        window.requestAnimationFrame(() => {
+          updateAnswerPanelHeight(quranAnswerPanel);
+          streamAnswerChunks(buildAnswerChunks(quranAnswerContent), quranAnswerPanel, quranAnswerText, playbackSlowdown);
+        });
+      }
+
+      const voiceQuestion = "根据这篇笔记帮我生成一个去伊斯坦布尔旅游清单的备忘录";
+      const voiceMemoReplyContent = "我已将去伊斯坦布尔旅行注意事项清单整理至备忘录：";
+
+      function revealVoiceMemoPreview() {
+        gsap.fromTo(
+          voiceMemoPreview,
+          { autoAlpha: 0, y: 10, scale: 0.98 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.48, ease: "power3.out" }
+        );
+      }
+
+      function startVoiceMemoAnswer(playbackSlowdown = 1) {
+        quranListeningUi.classList.remove("is-visible");
+        screen.classList.remove("is-voice-question", "is-quran-listening", "is-listening");
+        screen.classList.add("is-answering");
+        voiceListeningLabel.textContent = "我在听";
+        voiceMemoPanel.style.height = "0px";
+        voiceMemoPanel.classList.remove("is-complete");
+        voiceMemoPanel.classList.add("is-visible");
+        voiceMemoPanel.style.height = "216px";
+        voiceMemoReply.textContent = "";
+        gsap.set(voiceMemoPreview, { autoAlpha: 0, y: 10, scale: 0.98 });
+
+        gsap.fromTo(
+          voiceMemoPanel,
+          { autoAlpha: 0, y: -16, scale: 0.96 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.46 * playbackSlowdown, ease: "power3.out" }
+        );
+
+        window.requestAnimationFrame(() => {
+          const chunks = buildAnswerChunks(voiceMemoReplyContent);
+          let chunkIndex = 0;
+          let currentLine = null;
+
+          function appendMemoChunk() {
+            const chunk = chunks[chunkIndex];
+            if (!chunk) {
+              voiceMemoPanel.classList.add("is-complete");
+              revealVoiceMemoPreview();
+              return;
+            }
+
+            if (chunk.type === "line") {
+              currentLine = document.createElement("span");
+              currentLine.className = "answer-line";
+              voiceMemoReply.appendChild(currentLine);
+              chunkIndex += 1;
+              wait(0, appendMemoChunk);
+              return;
+            }
+
+            const span = document.createElement("span");
+            span.className = "stream-chunk";
+            span.textContent = chunk.text;
+            span.style.setProperty("--chunk-duration", `${820 * playbackSlowdown}ms`);
+            span.style.setProperty("--sweep-delay", `${80 * playbackSlowdown}ms`);
+            span.style.setProperty("--sweep-end", `${120 + (chunkIndex % 4) * 22}%`);
+            span.style.setProperty("--sweep-alpha", `${0.5 - (chunkIndex % 4) * 0.06}`);
+            (currentLine || voiceMemoReply).appendChild(span);
+            chunkIndex += 1;
+            wait(118 * playbackSlowdown, appendMemoChunk);
+          }
+
+          appendMemoChunk();
+        });
+      }
+
+      function typeVoiceQuestion(index = 0, playbackSlowdown = 1) {
+        voiceListeningLabel.textContent = voiceQuestion.slice(0, index);
+        if (index < voiceQuestion.length) {
+          wait(78 * playbackSlowdown, () => typeVoiceQuestion(index + 1, playbackSlowdown));
+          return;
+        }
+
+        wait(260 * playbackSlowdown, () => {
+          voiceListeningLabel.textContent = "我在听";
+          startVoiceMemoAnswer(playbackSlowdown);
+        });
+      }
+
+      function startVoiceQuestion(playbackSlowdown = 1) {
+        if (!aiCompanion.classList.contains("is-active") && !aiCompanion.classList.contains("is-tip")) return;
+
+        clearDemoTimers();
+        window.clearTimeout(answerTypeTimer);
+        screen.classList.remove("is-answering", "has-selection", "has-quran-selection");
+        hideQuranListeningUi();
+        aiAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        voiceMemoPanel.classList.remove("is-visible", "is-complete");
+        aiAnswerPanel.style.height = "0px";
+        quranAnswerPanel.style.height = "0px";
+        voiceMemoPanel.style.height = "0px";
+        aiAnswerText.textContent = "";
+        quranAnswerText.textContent = "";
+        voiceMemoReply.textContent = "";
+        gsap.set(voiceMemoPreview, { autoAlpha: 0, y: 10, scale: 0.98 });
+        voiceListeningLabel.textContent = "我在听";
+        quranListeningUi.classList.add("is-visible");
+        screen.classList.add("is-voice-question", "is-quran-listening");
+        playQuranListeningEntrance();
+        wait(1000 * playbackSlowdown, () => typeVoiceQuestion(1, playbackSlowdown));
+      }
+
+      function buildAnswerChunks(content = answerContentFigma) {
+        const chunks = [];
+        content.split("\n").forEach((line) => {
+          chunks.push({ type: "line", bullet: line.startsWith("•") });
+          let buffer = "";
+          Array.from(line).forEach((char) => {
+            buffer += char;
+            if (buffer.length >= 8 || /[，。！？：；、]/.test(char)) {
+              chunks.push({ type: "text", text: buffer });
+              buffer = "";
+            }
+          });
+          if (buffer) chunks.push({ type: "text", text: buffer });
+        });
+        return chunks;
+      }
+
+      function updateAnswerPanelHeight(panel = aiAnswerPanel) {
+        const textElement = panel.querySelector(".ai-answer-text");
+        const isQuranPanel = panel === quranAnswerPanel;
+        const bottomReserve = isQuranPanel ? 40 : 72;
+        const maxHeight = isQuranPanel ? 700 : 462;
+        let targetHeight = panel.scrollHeight;
+        if (textElement && textElement.textContent.trim()) {
+          if (isQuranPanel) {
+            // scrollHeight 不受 overflow: hidden 的可视裁切影响，能准确得到完整流式文本高度。
+            targetHeight = Math.max(96, textElement.offsetTop + textElement.scrollHeight + bottomReserve);
+          } else {
+            const panelRect = panel.getBoundingClientRect();
+            const textRect = textElement.getBoundingClientRect();
+            const textBottom = textRect.bottom - panelRect.top;
+            targetHeight = Math.max(96, textBottom + bottomReserve);
+          }
+        }
+        targetHeight = Math.min(targetHeight, maxHeight);
+        panel.style.height = `${targetHeight}px`;
+      }
+
+      function streamAnswerChunks(chunks, panel = aiAnswerPanel, textElement = aiAnswerText, playbackSlowdown = 1) {
+        let index = 0;
+        let currentLine = null;
+
+        function appendNextChunk() {
+          const chunk = chunks[index];
+
+          if (!chunk) {
+            updateAnswerPanelHeight(panel);
+            answerTypeTimer = window.setTimeout(() => {
+              panel.classList.add("is-complete");
+            }, 180 * playbackSlowdown);
+            return;
+          }
+
+          if (chunk.type === "line") {
+            currentLine = document.createElement("span");
+            currentLine.className = `answer-line${chunk.bullet ? " is-bullet" : ""}`;
+            textElement.appendChild(currentLine);
+            updateAnswerPanelHeight(panel);
+            index += 1;
+            answerTypeTimer = window.setTimeout(appendNextChunk, (index === 1 ? 0 : 72) * playbackSlowdown);
+            return;
+          }
+
+          const span = document.createElement("span");
+          span.className = "stream-chunk";
+          span.textContent = chunk.text;
+          span.style.setProperty("--chunk-duration", `${820 * playbackSlowdown}ms`);
+          span.style.setProperty("--sweep-delay", `${80 * playbackSlowdown}ms`);
+          span.style.setProperty("--sweep-end", `${120 + (index % 4) * 22}%`);
+          span.style.setProperty("--sweep-alpha", `${0.5 - (index % 4) * 0.06}`);
+          (currentLine || textElement).appendChild(span);
+          updateAnswerPanelHeight(panel);
+
+          index += 1;
+          answerTypeTimer = window.setTimeout(appendNextChunk, (chunk.text.length > 6 ? 118 : 88) * playbackSlowdown);
+        }
+
+        appendNextChunk();
+      }
+
+      function finishVoiceCommand() {
+        voiceTranscript.classList.remove("is-visible");
+        setIslandCompact();
+        wait(360, startAnswerTyping);
+      }
+
+      function startListeningSequence() {
+        showListeningIsland();
+        wait(520, () => voiceTranscript.classList.add("is-visible"));
+        wait(1780, finishVoiceCommand);
+      }
+
+      function resetDemo() {
+        clearDemoTimers();
+        clearRipple();
+        drawPointerId = null;
+        gestureMode = null;
+        screen.classList.remove("is-listening", "is-answering", "is-drawing", "is-text-drawing", "is-star-drawing", "has-selection", "has-quran-selection", "is-quran-listening", "is-voice-question");
+        voiceTranscript.classList.remove("is-visible");
+        aiAnswerPanel.classList.remove("is-visible", "is-complete");
+        quranAnswerPanel.classList.remove("is-visible", "is-complete");
+        voiceMemoPanel.classList.remove("is-visible", "is-complete");
+        quranSelectionFrame.classList.remove("is-visible");
+        hideQuranListeningUi();
+        aiAnswerPanel.style.height = "0px";
+        quranAnswerPanel.style.height = "0px";
+        voiceMemoPanel.style.height = "0px";
+        aiAnswerText.classList.remove("is-typing");
+        quranAnswerText.classList.remove("is-typing");
+        aiAnswerText.textContent = "";
+        quranAnswerText.textContent = "";
+        voiceMemoReply.textContent = "";
+        voiceListeningLabel.textContent = "我在听";
+        gsap.set(voiceMemoPreview, { autoAlpha: 0, y: 10, scale: 0.98 });
+        concealDynamicIsland();
+        resetGesturePath();
+        gesturePointer.classList.remove("is-visible");
+        aiCompanion.className = "ai-companion";
+        companionBarLabel.textContent = "天禧伴随中";
+      }
+
+      function setAiCompanionState(state) {
+        aiCompanion.className = `ai-companion${state ? ` is-${state}` : ""}`;
+      }
+
+      function startAiCompanionSequence(playbackSlowdown = 1) {
+        // 从默认灰色底 bar 开始，再变形成带“天禧伴随中”文案的彩色胶囊。
+        // 随后进入 Figma 188:4197 的彩色导航条与引导气泡状态。
+        setAiCompanionState("");
+        wait(180 * playbackSlowdown, () => {
+          setAiCompanionState("intro");
+          wait(2000 * playbackSlowdown, () => {
+            setAiCompanionState("tip");
+            wait(3000 * playbackSlowdown, () => setAiCompanionState("active"));
+          });
+        });
+      }
+
+      async function markAiAwake() {
+        const currentWakeSequence = ++wakeSequenceId;
+        let currentScreenSnapshot = null;
+        try {
+          currentScreenSnapshot = await captureCurrentScreenForRipple();
+        } catch (error) {
+          // 截图失败时仍继续进入伴随态，不展示错误的旧底图。
+        }
+        if (currentWakeSequence !== wakeSequenceId) return;
+        resetDemo();
+        device.classList.add("is-awake");
+        try {
+          await startAiKeyRipple(currentScreenSnapshot);
+        } catch (error) {
+          // 即使浏览器禁用了 WebGL 或纹理加载失败，也继续进入唤醒链路。
+          clearRipple();
+        }
+        if (currentWakeSequence !== wakeSequenceId) return;
+        // 只有快照水波已清除后，才允许灰色底 bar 开始变形，避免快照与实时 DOM 叠加。
+        startAiCompanionSequence();
+        wait(900, () => device.classList.remove("is-awake"));
+      }
+
+      function isAiKeyHit(event) {
+        const rect = device.getBoundingClientRect();
+        const scale = rect.width / 949;
+        return (
+          event.clientX >= rect.right - 32 * scale &&
+          event.clientX <= rect.right + 34 * scale &&
+          event.clientY >= rect.top + 92 * scale &&
+          event.clientY <= rect.top + 225 * scale
+        );
+      }
+
+      function startAiKeyPress() {
+        window.clearTimeout(pressTimer);
+        pressTimer = window.setTimeout(markAiAwake, 520);
+      }
+
+      function updateTouchCursor(event) {
+        if (isOuterTouchCursorActive) return;
+        const isInside =
+          event.clientX >= 0 &&
+          event.clientX <= window.innerWidth &&
+          event.clientY >= 0 &&
+          event.clientY <= window.innerHeight;
+
+        touchCursorVisible = isInside;
+        document.body.classList.toggle("is-touch-cursor-active", isInside);
+        touchCursor.classList.toggle("is-visible", isInside);
+        if (!isInside) {
+          touchCursor.classList.remove("is-pressed");
+          return;
+        }
+
+        // The cursor is rendered inside this iframe, whose edges crop overflow.
+        // Keep its visual center one radius inside the viewport so the full
+        // touch/click affordance remains visible when the pointer reaches an
+        // edge (especially beside the external AI side key).
+        const cursorRadius = 24;
+        const cursorX = Math.min(window.innerWidth - cursorRadius, Math.max(cursorRadius, event.clientX));
+        const cursorY = Math.min(window.innerHeight - cursorRadius, Math.max(cursorRadius, event.clientY));
+        touchCursor.style.left = `${cursorX}px`;
+        touchCursor.style.top = `${cursorY}px`;
+      }
+
+      function setTouchCursorPressed(isPressed) {
+        if (!touchCursorVisible) return;
+        touchCursor.classList.toggle("is-pressed", isPressed);
+      }
+
+      hideDynamicIsland();
+      startIslandColorVideo();
+      renderDots();
+      setSlide(0);
+      resetDemo();
+
+      window.addEventListener("pointermove", updateTouchCursor);
+
+      window.addEventListener("pointerdown", (event) => {
+        updateTouchCursor(event);
+        setTouchCursorPressed(true);
+      });
+
+      window.addEventListener("pointerleave", () => {
+        touchCursorVisible = false;
+        document.body.classList.remove("is-touch-cursor-active");
+        touchCursor.classList.remove("is-visible", "is-pressed");
+      });
+
+      screen.addEventListener("pointerdown", beginUserGesture, true);
+      screen.addEventListener("pointermove", continueUserGesture);
+      screen.addEventListener("pointerup", finishUserGesture);
+      screen.addEventListener("pointercancel", finishUserGesture);
+
+      explainQuranButton.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!quranListeningUi.classList.contains("is-visible")) return;
+        startQuranAnswerTyping();
+      });
+
+      quranListeningClose.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        // 关闭收音界面即结束整段 AI 伴随态，底 bar 回到默认灰色状态。
+        resetDemo();
+      });
+
+      aiCompanionBar.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        startVoiceQuestion();
+      });
+
+      // 侧键视觉宽度很窄，额外提供覆盖按钮附近的热区，确保长按稳定触发。
+      device.addEventListener("pointerdown", (event) => {
+        if (!isAiKeyHit(event)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        startAiKeyPress();
+      }, true);
+
+      slides.addEventListener("pointerdown", (event) => {
+        dragStartX = event.clientX;
+        isDragging = true;
+      });
+
+      window.addEventListener("pointerup", (event) => {
+        setTouchCursorPressed(false);
+        galleryGesture = null;
+        if (!isDragging) return;
+        const delta = event.clientX - dragStartX;
+        isDragging = false;
+
+        if (Math.abs(delta) > 42) {
+          setSlide(currentSlide + (delta < 0 ? 1 : -1));
+        }
+      });
+
+      sideAiKey.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startAiKeyPress();
+      });
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type === "ai-screen-demo-play-step") {
+          playScriptedDemoStep(Number(event.data.step));
+          return;
+        }
+        if (event.data?.type === "ai-screen-demo-outer-cursor-active") {
+          isOuterTouchCursorActive = true;
+          touchCursorVisible = false;
+          document.body.classList.remove("is-touch-cursor-active");
+          touchCursor.classList.remove("is-visible", "is-pressed");
+          return;
+        }
+        if (event.data?.type === "ai-screen-demo-outer-cursor-inactive") {
+          isOuterTouchCursorActive = false;
+          return;
+        }
+        if (event.data?.type === "ai-screen-demo-key-down") {
+          startAiKeyPress();
+        }
+        if (event.data?.type === "ai-screen-demo-key-up") {
+          window.clearTimeout(pressTimer);
+        }
+      });
+
+      window.addEventListener("pointerup", () => {
+        window.clearTimeout(pressTimer);
+      });
+
+      window.addEventListener("pointercancel", () => {
+        setTouchCursorPressed(false);
+        galleryGesture = null;
+        isDragging = false;
+        window.clearTimeout(pressTimer);
+      });
+
+      window.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowLeft") setSlide(currentSlide - 1);
+        if (event.key === "ArrowRight") setSlide(currentSlide + 1);
+      });
+    </script>
+  </body>
+</html>

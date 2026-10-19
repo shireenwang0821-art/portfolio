@@ -1,0 +1,4868 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="AI 妙记主动感知、录制反馈与会后纪要生成 DEMO。" />
+    <title>AI 妙记 Demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --stage-scale: 1;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        min-width: 320px;
+        min-height: 100%;
+        overflow: hidden;
+        background: #050608;
+        font-family:
+          "Microsoft YaHei UI",
+          "Microsoft YaHei",
+          "PingFang SC",
+          "Noto Sans CJK SC",
+          sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        min-height: 100svh;
+      }
+
+      button {
+        font: inherit;
+      }
+
+      .demo-shell {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        height: 100svh;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 48% 42%, rgb(66 108 164 / 0.2), transparent 48%),
+          #050608;
+      }
+
+      .figma-stage {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 1600px;
+        height: 1000px;
+        overflow: hidden;
+        background: #050608;
+        transform: translate(-50%, -50%) scale(var(--stage-scale));
+        transform-origin: center;
+      }
+
+      .figma-stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgb(5 6 8 / 0) 58%, rgb(5 6 8 / 0.18) 100%),
+          radial-gradient(circle at 83% 24%, rgb(255 92 56 / 0.12), transparent 22%);
+      }
+
+      .figma-base,
+      .aui-prompt__image {
+        display: block;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .figma-base {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        pointer-events: none;
+        opacity: 1;
+        transition: opacity 280ms ease;
+      }
+
+      .figma-base--clean {
+        opacity: 0;
+      }
+
+      .figma-stage--minutes-open .figma-base--meeting {
+        opacity: 0;
+      }
+
+      .figma-stage--minutes-open .figma-base--clean {
+        opacity: 1;
+      }
+
+      .aui-prompt {
+        position: absolute;
+        left: 538px;
+        top: 0;
+        z-index: 6;
+        width: 524px;
+        height: 114px;
+        opacity: 0;
+        transform: translate3d(0, -42px, 0);
+        transform-origin: 50% 0%;
+        animation: animate__fadeInDown 350ms 1000ms both;
+        filter: drop-shadow(0 14px 26px rgb(0 0 0 / 0.34));
+        will-change: transform, opacity, filter;
+      }
+
+      .aui-prompt__image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        pointer-events: none;
+      }
+
+      .aui-prompt__orb {
+        position: absolute;
+        left: 42px;
+        top: 20px;
+        z-index: 1;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        pointer-events: none;
+        background: radial-gradient(circle at 32% 28%, #0d74ff 0 18%, #0716a9 36%, #090027 58%, #d26a28 88%, #08115d 100%);
+      }
+
+      .aui-prompt__actions {
+        position: absolute;
+        left: 42px;
+        top: 64px;
+        z-index: 2;
+        display: flex;
+        gap: 12px;
+        width: 442px;
+        height: 30px;
+      }
+
+      .aui-prompt__button {
+        position: relative;
+        display: flex;
+        width: 215px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        border-radius: 16px;
+        background: transparent;
+        color: rgb(255 255 255 / 0.8);
+        cursor: pointer;
+        font: 400 12px/16.364px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .aui-prompt__button--ghost::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 200%;
+        height: 200%;
+        border: 1px solid rgb(255 255 255 / 0.84);
+        border-radius: 32px;
+        pointer-events: none;
+        transform: scale(0.5);
+        transform-origin: left top;
+      }
+
+      .aui-prompt__button--primary {
+        border: 0.5px solid rgb(255 255 255 / 0.1);
+        border-radius: 60px;
+        background: #fff;
+        color: #333;
+        font-weight: 700;
+      }
+
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      .recording-island {
+        position: absolute;
+        left: 599.765625px;
+        top: 0;
+        z-index: 5;
+        width: 400px;
+        height: 56px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, -62px, 0);
+        transform-origin: 50% 0;
+        transition:
+          left 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+          opacity 300ms ease;
+        will-change: left, width, height, transform, opacity;
+      }
+
+      .recording-island::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 46px;
+        z-index: 0;
+        width: 428px;
+        height: 76px;
+        border-radius: 999px;
+        background: url("assets/ai-miaoji/recording-stop-confirm-glow-figma.svg") center / 428px 76px no-repeat;
+        opacity: 0;
+        transform: translateX(-50%);
+        transition: opacity 260ms ease;
+        pointer-events: none;
+      }
+
+      .recording-island__surface {
+        position: absolute;
+        left: 0;
+        top: 0;
+        z-index: 1;
+        width: 400px;
+        height: 57px;
+        overflow: hidden;
+        background: url("assets/ai-miaoji/recording-island-surface-figma.png") 0 0 / 400px 57px no-repeat;
+        transition:
+          width 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 420ms cubic-bezier(0.22, 1, 0.36, 1),
+          background 180ms ease;
+      }
+
+      .recording-island__surface::before,
+      .recording-island__surface::after {
+        content: "";
+        position: absolute;
+        pointer-events: none;
+      }
+
+      .recording-island__surface::before {
+        left: 38px;
+        top: 9px;
+        width: 326px;
+        height: 41px;
+        border-radius: 22px;
+        background: #030305;
+        opacity: 1;
+        transition: opacity 180ms ease;
+      }
+
+      .recording-island__surface::after {
+        inset: 0;
+        background: none;
+        opacity: 0;
+      }
+
+      .recording-island__content {
+        position: absolute;
+        left: 16px;
+        top: 0;
+        z-index: 2;
+        display: flex;
+        width: 368px;
+        height: 56px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 32px;
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+        transition:
+          opacity 180ms ease,
+          transform 260ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .recording-island__switch {
+        position: absolute;
+        left: 352px;
+        top: 16px;
+        z-index: 4;
+        display: none;
+        width: 52px;
+        height: 52px;
+        place-items: center;
+        padding: 0;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 999px;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 0.12) 0%, rgb(255 255 255 / 0.06) 100%),
+          rgb(12 12 14 / 0.9);
+        color: #fff;
+        cursor: pointer;
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 0.08),
+          0 12px 26px rgb(0 0 0 / 0.32);
+        transition: transform 120ms ease, background 160ms ease;
+      }
+
+      .recording-island__switch:disabled {
+        cursor: default;
+      }
+
+      .recording-island__switch:active {
+        transform: scale(0.96);
+      }
+
+      .recording-island__switch-icon {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        border-radius: 50%;
+      }
+
+      .recording-island__switch-icon--cc,
+      .recording-island__cc-icon {
+        border-radius: 0;
+        background: url("assets/ai-miaoji/linglong-subtitle-icon-figma.svg") center / 21.6px 21.6px no-repeat;
+      }
+
+      .recording-island__switch-icon--ai {
+        background: url("assets/ai-miaoji/recording-note-icon-figma.svg") center / 24px 24px no-repeat;
+      }
+
+      .recording-island__cc-icon {
+        display: none;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        place-items: center;
+        border-radius: 50%;
+      }
+
+      .recording-island__status {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .recording-island__ai-icon,
+      .recording-island__note-icon {
+        display: block;
+        width: 24px;
+        height: 24px;
+        flex: 0 0 auto;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .recording-island__label {
+        color: #fff;
+        font: 400 14px/22px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .recording-island__actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .recording-island__control {
+        position: relative;
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        padding: 0;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 50%;
+        background: rgb(255 255 255 / 0.12);
+        color: #fff;
+        cursor: pointer;
+      }
+
+      .recording-island__control--stop {
+        border: 0;
+        background: linear-gradient(180deg, #dc2626 0%, #f75533 100%);
+      }
+
+      .recording-island__control--expand {
+        border: 0.5px solid rgb(255 255 255 / 0.12);
+        background: rgb(255 255 255 / 0.22);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+      }
+
+      .recording-island__control--screenshot {
+        border: 0.5px solid rgb(255 255 255 / 0.12);
+        background: rgb(255 255 255 / 0.16);
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.04);
+      }
+
+      .recording-island--toolbar {
+        left: 560px;
+        width: 480px;
+        height: 84px;
+      }
+
+      .recording-island--toolbar::before {
+        top: 32px;
+        width: 438px;
+        height: 76px;
+        opacity: 1;
+        background: url("assets/ai-miaoji/recording-toolbar-glow-figma.svg") center / 438px 76px no-repeat;
+        filter: none;
+      }
+
+      .recording-island--toolbar .recording-island__surface {
+        width: 480px;
+        height: 84px;
+        border: 0;
+        border-radius: 0;
+        background: url("assets/ai-miaoji/recording-toolbar-surface-figma.svg") 0 -1px / 480px 86px no-repeat;
+        box-shadow: none;
+      }
+
+      .recording-island--toolbar .recording-island__surface::before {
+        left: 52px;
+        top: 16px;
+        width: 316px;
+        height: 52px;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 999px;
+        background:
+          linear-gradient(180deg, rgb(255 255 255 / 0.12) 0%, rgb(255 255 255 / 0.06) 100%),
+          rgb(13 13 15 / 0.96);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+      }
+
+      .recording-island--toolbar .recording-island__content {
+        z-index: 3;
+        left: 52px;
+        top: 16px;
+        width: 316px;
+        height: 52px;
+        padding: 14px 16px;
+      }
+
+      .recording-island--toolbar .recording-island__actions {
+        gap: 12px;
+      }
+
+      .recording-island--toolbar .recording-island__switch {
+        display: grid;
+        left: 376px;
+      }
+
+      .recording-island--subtitle .recording-island__note-icon {
+        display: none;
+      }
+
+      .recording-island--subtitle .recording-island__cc-icon {
+        display: grid;
+      }
+
+      .recording-island--subtitle .recording-island__control--screenshot {
+        display: none;
+      }
+
+      .recording-island__control--pause .recording-island__pause-icon {
+        display: flex;
+        gap: 3px;
+      }
+
+      .recording-island__pause-icon::before,
+      .recording-island__pause-icon::after {
+        content: "";
+        width: 2.5px;
+        height: 9px;
+        border-radius: 1px;
+        background: rgb(255 255 255 / 0.82);
+      }
+
+      .recording-island__control--pause.is-paused .recording-island__pause-icon {
+        width: 0;
+        height: 0;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+        border-left: 8px solid rgb(255 255 255 / 0.88);
+      }
+
+      .recording-island__control--pause.is-paused .recording-island__pause-icon::before,
+      .recording-island__control--pause.is-paused .recording-island__pause-icon::after {
+        display: none;
+      }
+
+      .recording-island__stop-icon {
+        width: 8px;
+        height: 8px;
+        border-radius: 1.8px;
+        background: #fff;
+      }
+
+      .recording-island__expand-icon {
+        display: block;
+        width: 15px;
+        height: 15px;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .recording-island__expand-icon path {
+        stroke: rgb(255 255 255 / 0.82);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      .recording-island__screenshot-icon {
+        display: block;
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .recording-confirm {
+        position: absolute;
+        left: 24px;
+        top: 0;
+        z-index: 3;
+        display: flex;
+        width: 412px;
+        height: 98px;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 24px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, -4px, 0) scale(0.985);
+        transform-origin: 50% 0;
+        transition:
+          opacity 180ms ease,
+          transform 280ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .recording-confirm__title {
+        display: flex;
+        width: 354px;
+        height: 24px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .recording-confirm__icon {
+        display: block;
+        width: 20px;
+        height: 20px;
+        border-radius: 11.392px;
+        flex: 0 0 auto;
+        object-fit: cover;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+        background: radial-gradient(circle at 32% 28%, #0d74ff 0 18%, #0716a9 36%, #090027 58%, #d26a28 88%, #08115d 100%);
+      }
+
+      .recording-confirm__text {
+        color: #fff;
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+      }
+
+      .recording-confirm__actions {
+        display: flex;
+        width: 354px;
+        height: 30px;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .recording-confirm__button {
+        display: flex;
+        width: 171px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 16px;
+        background: rgb(255 255 255 / 0.08);
+        color: rgb(255 255 255 / 0.72);
+        cursor: pointer;
+        font: 400 12px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .recording-confirm__button--continue {
+        border-color: rgb(255 255 255 / 0.1);
+        border-radius: 60px;
+        background: #fff;
+        color: #333;
+        font-weight: 700;
+        box-shadow: 0 0 0 rgb(0 0 0 / 0.8);
+      }
+
+      .recording-confirm__button:focus-visible,
+      .recording-island__control:focus-visible,
+      .recording-island__switch:focus-visible {
+        outline: 2px solid rgb(138 200 255 / 0.95);
+        outline-offset: 3px;
+      }
+
+      .recording-island--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .recording-island--expanded {
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, -76px, 0) scale(0.86);
+      }
+
+      .recording-island--confirm {
+        left: 575px;
+        width: 450px;
+        height: 98px;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .recording-island--confirm .recording-island__surface {
+        width: 450px;
+        height: 98px;
+        overflow: hidden;
+        background: url("assets/ai-miaoji/recording-stop-confirm-surface-figma.svg") 0 -1px / 450px 100px no-repeat;
+      }
+
+      .recording-island--confirm .recording-island__surface::before {
+        opacity: 0;
+      }
+
+      .recording-island--confirm .recording-island__surface::after {
+        opacity: 0;
+      }
+
+      .recording-island--confirm::before {
+        opacity: 1;
+      }
+
+      .recording-island--confirm .recording-island__content {
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, -4px, 0) scale(0.985);
+      }
+
+      .recording-island--confirm .recording-confirm {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      .recording-island--stopped {
+        pointer-events: none;
+        opacity: 0;
+        transform: translate3d(0, -62px, 0) scale(0.86, 0.72);
+      }
+
+      .final-summary-toast {
+        position: absolute;
+        left: 575px;
+        top: -5px;
+        z-index: 7;
+        width: 450px;
+        height: 178px;
+        color: #fff;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, -82px, 0) scaleY(0.92);
+        transform-origin: 50% 0;
+        transition:
+          opacity 280ms ease,
+          transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .final-summary-toast--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scaleY(1);
+      }
+
+      .final-summary-toast::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -24px;
+        width: 398px;
+        height: 76px;
+        background: url("assets/ai-miaoji/final-summary-glow-figma.svg") center / 398px 76px no-repeat;
+        transform: translateX(-50%);
+        pointer-events: none;
+      }
+
+      .final-summary-toast__surface {
+        position: absolute;
+        left: 0;
+        top: -2px;
+        z-index: 1;
+        width: 450px;
+        height: 180px;
+        overflow: hidden;
+        border-radius: 0;
+        background: url("assets/ai-miaoji/final-summary-surface-figma.svg") 0 0 / 450px 180px no-repeat;
+        clip-path: inset(2px 0 0 0);
+      }
+
+      .final-summary-toast__surface::before,
+      .final-summary-toast__surface::after {
+        display: none;
+      }
+
+      .final-summary-toast__content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        width: 402px;
+        box-sizing: border-box;
+        flex-direction: column;
+        gap: 12px;
+        padding: 16px 24px 0;
+        margin: 0 auto;
+      }
+
+      .final-summary-toast__title {
+        display: flex;
+        width: 100%;
+        align-items: center;
+        gap: 8px;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 12px/20px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .final-summary-toast__orb {
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        object-fit: cover;
+        background: radial-gradient(circle at 32% 28%, #0d74ff 0 18%, #0716a9 36%, #090027 58%, #d26a28 88%, #08115d 100%);
+      }
+
+      .final-summary-toast__card {
+        display: flex;
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 72px;
+        align-items: center;
+        padding: 14px 30px;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 12px;
+        background: linear-gradient(180deg, rgb(255 255 255 / 0.12) 0%, rgb(255 255 255 / 0.06) 100%);
+      }
+
+      .final-summary-toast__icon {
+        display: block;
+        width: 40px;
+        height: 40px;
+        margin-right: 30px;
+        opacity: 0.6;
+        filter: grayscale(1);
+        mix-blend-mode: luminosity;
+      }
+
+      .final-summary-toast__meta {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .final-summary-toast__metric {
+        min-width: 74px;
+        white-space: nowrap;
+      }
+
+      .final-summary-toast__metric-label {
+        display: block;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 12px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .final-summary-toast__metric-value {
+        display: block;
+        color: #fff;
+        font: 400 16px/26px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .final-summary-toast__metric-value strong {
+        font-family: Roboto, "Microsoft YaHei UI", sans-serif;
+        font-weight: 700;
+      }
+
+      .final-summary-toast__divider {
+        width: 1px;
+        height: 44px;
+        background: rgb(255 255 255 / 0.16);
+      }
+
+      .final-summary-toast__actions {
+        display: flex;
+        width: 100%;
+        gap: 12px;
+      }
+
+      .final-summary-toast__button {
+        display: flex;
+        width: 171px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border-radius: 16px;
+        cursor: pointer;
+        font: 400 12px/16px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .final-summary-toast__button--ghost {
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        background: rgb(255 255 255 / 0.08);
+        color: rgb(255 255 255 / 0.72);
+      }
+
+      .final-summary-toast__button--primary {
+        border: 0.5px solid rgb(255 255 255 / 0.1);
+        border-radius: 60px;
+        background: #fff;
+        color: #333;
+        font-weight: 700;
+      }
+
+      .agent-panel {
+        position: absolute;
+        left: 1130px;
+        top: 30px;
+        z-index: 4;
+        width: 440px;
+        height: 600px;
+        overflow: hidden;
+        color: #fff;
+        border: 1px solid rgb(78 91 132 / 0.42);
+        border-radius: 20px;
+        background:
+          radial-gradient(circle at 29% 101%, rgb(110 55 24 / 0.4), transparent 26%),
+          radial-gradient(circle at 76% 95%, rgb(36 62 137 / 0.46), transparent 32%),
+          #020203;
+        box-shadow:
+          0 26px 64px rgb(0 0 0 / 0.52),
+          inset 0 0 0 1px rgb(255 255 255 / 0.018);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(32px, 0, 0) scale(0.985);
+        will-change: transform, opacity;
+      }
+
+      .agent-panel--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      .agent-panel__top {
+        position: relative;
+        display: flex;
+        height: 56px;
+        align-items: flex-start;
+        justify-content: center;
+        padding-top: 16px;
+      }
+
+      .agent-panel__brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 24px;
+      }
+
+      .agent-panel__brand img {
+        display: block;
+        width: 20px;
+        height: 20px;
+      }
+
+      .agent-panel__brand span {
+        color: rgb(255 255 255 / 0.96);
+        font: 700 14px/20px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-panel__collapse {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: rgb(255 255 255 / 0.42);
+        cursor: pointer;
+      }
+
+      .agent-panel__collapse svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .agent-panel__body {
+        position: absolute;
+        left: 30px;
+        right: 16px;
+        top: 70px;
+        height: 452px;
+        overflow: hidden;
+      }
+
+      .agent-tabs {
+        position: relative;
+        display: flex;
+        height: 37px;
+        align-items: flex-start;
+        gap: 32px;
+        border-bottom: 1px solid rgb(255 255 255 / 0.1);
+      }
+
+      .agent-tabs__tab {
+        position: relative;
+        padding: 0 4px 11px;
+        border: 0;
+        background: transparent;
+        color: rgb(255 255 255 / 0.45);
+        cursor: pointer;
+        font: 700 16px/26px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .agent-tabs__tab--active {
+        color: rgb(255 255 255 / 0.9);
+      }
+
+      .agent-tabs__tab--active::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        bottom: -1px;
+        width: 64px;
+        height: 3px;
+        border-radius: 999px 999px 0 0;
+        background: #2c68ff;
+      }
+
+      .agent-timeline {
+        display: grid;
+        gap: 0;
+        margin: 24px 0 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .agent-panel__feed {
+        box-sizing: border-box;
+        width: 100%;
+        height: calc(100% - 37px);
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding: 0 0 30px 0;
+        scrollbar-color: rgb(255 255 255 / 0.28) rgb(255 255 255 / 0.06);
+        scrollbar-width: thin;
+      }
+
+      .agent-panel__feed--hidden {
+        display: none;
+      }
+
+      .agent-panel__feed::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .agent-panel__feed::-webkit-scrollbar-track {
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.06);
+      }
+
+      .agent-panel__feed::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.28);
+      }
+
+      .agent-panel__feed::-webkit-scrollbar-thumb:hover {
+        background: rgb(255 255 255 / 0.38);
+      }
+
+      .agent-transcript {
+        display: grid;
+        gap: 20px;
+        margin: 24px 0 0;
+        padding: 0 0 30px;
+      }
+
+      .agent-transcript__entry {
+        display: grid;
+        gap: 12px;
+        width: 370px;
+        opacity: 1;
+        transition:
+          opacity 220ms ease,
+          transform 220ms ease;
+      }
+
+      .agent-transcript__entry--pending {
+        display: none;
+        opacity: 0;
+        transform: translate3d(0, 4px, 0);
+      }
+
+      .agent-transcript__entry--pending .agent-transcript__bubble {
+        color: transparent;
+      }
+
+      .agent-transcript__entry--typing {
+        display: grid;
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .agent-transcript__speaker {
+        display: flex;
+        width: 370px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .agent-transcript__avatar {
+        display: inline-flex;
+        width: 18px;
+        height: 18px;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #93c5fd;
+        color: #18181b;
+        font: 700 11px/14px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-transcript__entry:nth-child(2n) .agent-transcript__avatar {
+        background: #fed7aa;
+      }
+
+      .agent-transcript__entry:nth-child(3n) .agent-transcript__avatar {
+        background: #bfdbfe;
+      }
+
+      .agent-transcript__meta {
+        color: rgb(255 255 255 / 0.48);
+        font: 400 12px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .agent-transcript__bubble {
+        display: flex;
+        width: 370px;
+        align-items: flex-start;
+        justify-content: flex-start;
+        padding: 10px 12px;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 4px 12px 12px;
+        background: rgb(255 255 255 / 0.08);
+        color: rgb(255 255 255 / 0.8);
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        text-align: left;
+        white-space: normal;
+      }
+
+      .agent-transcript__entry--screenshot {
+        gap: 10px;
+      }
+
+      .agent-transcript__entry--screenshot .agent-transcript__speaker {
+        gap: 8px;
+      }
+
+      .agent-transcript__entry.agent-transcript__entry--screenshot .agent-transcript__avatar.agent-transcript__avatar--image {
+        background: rgb(255 255 255 / 0.36);
+        color: rgb(255 255 255 / 0.78);
+        font-size: 0;
+      }
+
+      .agent-transcript__entry.agent-transcript__entry--screenshot .agent-transcript__avatar.agent-transcript__avatar--image::before {
+        content: "";
+        width: 11px;
+        height: 11px;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.2 3.2h11.6v9.6H2.2V3.2Zm1.2 1.2v5.86l2.4-2.4 2.1 2.06 1.42-1.42 3.28 3.28V4.4H3.4Zm7.72 1.28a1.18 1.18 0 1 1 0 2.36 1.18 1.18 0 0 1 0-2.36Z'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.2 3.2h11.6v9.6H2.2V3.2Zm1.2 1.2v5.86l2.4-2.4 2.1 2.06 1.42-1.42 3.28 3.28V4.4H3.4Zm7.72 1.28a1.18 1.18 0 1 1 0 2.36 1.18 1.18 0 0 1 0-2.36Z'/%3E%3C/svg%3E") center / 11px 11px no-repeat;
+      }
+
+      .agent-transcript__screenshot-image {
+        display: block;
+        width: 126px;
+        height: 126px;
+        border-radius: 14px;
+        object-fit: cover;
+        background: #fff;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .agent-timeline__item {
+        position: relative;
+        display: grid;
+        grid-template-columns: 40px 1fr;
+        column-gap: 12px;
+        min-height: 52px;
+        color: #fff;
+      }
+
+      .agent-timeline__item--hidden {
+        display: none;
+      }
+
+      .agent-timeline__item--large {
+        min-height: 130px;
+      }
+
+      .agent-timeline__time {
+        display: inline-flex;
+        width: 40px;
+        height: 18px;
+        align-items: center;
+        justify-content: center;
+        margin-top: 4px;
+        border-radius: 4px;
+        background: rgb(255 255 255 / 0.1);
+        color: rgb(255 255 255 / 0.44);
+        font: 400 12px/12px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        transition:
+          background 180ms ease,
+          color 180ms ease,
+          opacity 180ms ease;
+      }
+
+      .agent-timeline__item--large .agent-timeline__time {
+        margin-top: 24px;
+      }
+
+      .agent-timeline__content {
+        position: relative;
+        padding-left: 18px;
+      }
+
+      .agent-timeline__content::before {
+        content: "";
+        position: absolute;
+        left: 3px;
+        top: 10px;
+        bottom: 0;
+        border-left: 1px dashed rgb(255 255 255 / 0.24);
+      }
+
+      .agent-timeline__item--large .agent-timeline__content::before {
+        top: 30px;
+      }
+
+      .agent-timeline__item:last-child .agent-timeline__content::before {
+        display: none;
+      }
+
+      .agent-timeline__content::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 0.94);
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+      }
+
+      .agent-timeline__item--large .agent-timeline__content::after {
+        top: 26px;
+      }
+
+      .agent-timeline__item--pending .agent-timeline__time {
+        opacity: 0.34;
+      }
+
+      .agent-timeline__item--pending .agent-timeline__content::after {
+        opacity: 0.46;
+      }
+
+      .agent-timeline__item--generating .agent-timeline__time {
+        background: rgb(255 255 255 / 0.14);
+        color: rgb(255 255 255 / 0.72);
+        opacity: 1;
+      }
+
+      .agent-timeline__item--generating .agent-timeline__content::after {
+        opacity: 1;
+        transform: scale(1.2);
+      }
+
+      .agent-timeline__title {
+        margin: 0;
+        color: rgb(255 255 255 / 0.9);
+        font: 700 16px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-timeline__item--large .agent-timeline__title {
+        margin-top: 20px;
+      }
+
+      .agent-timeline__text {
+        margin: 8px 0 0;
+        color: rgb(255 255 255 / 0.5);
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-timeline__text--single {
+        overflow: hidden;
+        margin-top: 0;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .agent-typewriter.is-typing::after {
+        content: "";
+        display: inline-block;
+        width: 1px;
+        height: 1em;
+        margin-left: 2px;
+        background: currentColor;
+        opacity: 0.75;
+        vertical-align: -0.12em;
+        animation: typeCaret 720ms steps(1, end) infinite;
+      }
+
+      .agent-panel__status {
+        display: flex;
+        width: 310px;
+        min-height: 18px;
+        align-items: center;
+        gap: 12px;
+        margin: 20px 0 0 70px;
+        color: rgb(255 255 255 / 0.78);
+        font: 400 13px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-panel__status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        flex: 0 0 auto;
+        border-radius: 50%;
+        background: #fff;
+      }
+
+      .agent-panel__status.is-pending::before {
+        opacity: 0;
+      }
+
+      .agent-panel__footer {
+        position: absolute;
+        left: 30px;
+        bottom: 24px;
+        display: flex;
+        width: 380px;
+        height: 30px;
+        align-items: center;
+      }
+
+      .agent-panel__runtime {
+        width: 40px;
+        color: rgb(255 255 255 / 0.95);
+        font: 400 14px/17px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-waveform {
+        display: flex;
+        width: 177px;
+        height: 30px;
+        align-items: center;
+        gap: 2px;
+        margin-left: 16px;
+        overflow: hidden;
+      }
+
+      .agent-waveform span {
+        --wave-rest: 0.62;
+        width: 1px;
+        min-width: 1px;
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.78);
+        transform: scaleY(var(--wave-rest));
+        transform-origin: 50% 50%;
+        animation: agentWave 880ms ease-in-out infinite alternate;
+        animation-delay: calc(var(--wave-index, 0) * -72ms);
+        will-change: transform, opacity;
+      }
+
+      .agent-waveform span:nth-child(3n) {
+        height: 20px;
+        --wave-rest: 0.68;
+      }
+
+      .agent-waveform span:nth-child(3n + 1) {
+        height: 12px;
+        --wave-rest: 0.82;
+      }
+
+      .agent-waveform span:nth-child(3n + 2) {
+        height: 24px;
+        --wave-rest: 0.48;
+      }
+
+      .agent-waveform span:nth-child(n + 32) {
+        background: rgb(255 255 255 / 0.28);
+      }
+
+      .agent-waveform--paused span {
+        animation: none;
+        opacity: 0.64;
+        transform: scaleY(var(--wave-rest));
+      }
+
+      .agent-panel__controls {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-left: 16px;
+      }
+
+      .agent-panel__control {
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 0.14);
+        color: rgb(255 255 255 / 0.82);
+        cursor: pointer;
+      }
+
+      .agent-panel__control--play {
+        background: url("assets/ai-miaoji/agent-play-button-figma.png") center / 24px 24px no-repeat;
+      }
+
+      .agent-panel__control--play.is-playing {
+        background: rgb(255 255 255 / 0.14);
+      }
+
+      .agent-panel__control--play.is-playing::before {
+        content: "";
+        width: 8px;
+        height: 10px;
+        border-radius: 1px;
+        background: linear-gradient(90deg, rgb(255 255 255 / 0.82) 0 3px, transparent 3px 5px, rgb(255 255 255 / 0.82) 5px 8px);
+      }
+
+      .agent-panel__control--play svg {
+        display: none;
+      }
+
+      .agent-panel__control--stop {
+        background: #ff3c2f;
+      }
+
+      .agent-panel__tool {
+        position: relative;
+        display: inline-flex;
+        width: 51px;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 5px 8px;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 8px;
+        background: rgb(255 255 255 / 0.12);
+        color: rgb(255 255 255 / 0.86);
+        cursor: pointer;
+        transition:
+          background 160ms ease,
+          border-color 160ms ease,
+          box-shadow 160ms ease;
+      }
+
+      .agent-panel__tool:hover,
+      .agent-panel__tool:focus-visible {
+        border-color: rgb(255 255 255 / 0.22);
+        background: rgb(255 255 255 / 0.22);
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.08);
+      }
+
+      .agent-panel__tool::before {
+        content: "实时截图";
+        position: absolute;
+        left: 50%;
+        bottom: 38px;
+        display: flex;
+        width: 64px;
+        height: 31px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        background: rgb(54 54 54 / 0.96);
+        color: rgb(255 255 255 / 0.94);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(-50%, 4px, 0);
+        transition: opacity 140ms ease, transform 140ms ease;
+        font: 700 14px/20px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .agent-panel__tool::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 31px;
+        width: 12px;
+        height: 12px;
+        border-radius: 1px;
+        background: rgb(54 54 54 / 0.96);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(-50%, 4px, 0) rotate(45deg);
+        transition: opacity 140ms ease, transform 140ms ease;
+      }
+
+      .agent-panel__tool:hover::before,
+      .agent-panel__tool:hover::after,
+      .agent-panel__tool:focus-visible::before,
+      .agent-panel__tool:focus-visible::after {
+        opacity: 1;
+        transform: translate3d(-50%, 0, 0);
+      }
+
+      .agent-panel__tool:hover::after,
+      .agent-panel__tool:focus-visible::after {
+        transform: translate3d(-50%, 0, 0) rotate(45deg);
+      }
+
+      .agent-panel__tool-icon {
+        display: block;
+        width: 14px;
+        height: 14px;
+        transform: rotate(-90deg);
+        transform-origin: 50% 50%;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .agent-panel__tool-divider {
+        width: 1px;
+        height: 12px;
+        background: rgb(255 255 255 / 0.16);
+      }
+
+      .agent-panel__tool-caret {
+        display: block;
+        width: 8px;
+        height: 8px;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .subtitle-panel {
+        position: absolute;
+        left: 454px;
+        top: 810px;
+        z-index: 6;
+        width: 692px;
+        height: 124px;
+        overflow: hidden;
+        padding: 10px 16px 16px;
+        border: 1px solid rgb(255 255 255 / 0.2);
+        border-radius: 20px;
+        background: rgb(0 0 0 / 0.95);
+        color: #fff;
+        box-shadow:
+          0 28px 54px rgb(0 0 0 / 0.45),
+          inset 0 0 0 1px rgb(255 255 255 / 0.025);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, 22px, 0) scale(0.98);
+        transform-origin: 50% 100%;
+      }
+
+      .subtitle-panel--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      .subtitle-panel::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        z-index: 0;
+        background: url("assets/ai-miaoji/subtitle-panel-glow-full.jpg") center / 100% 100% no-repeat;
+        opacity: 1;
+        pointer-events: none;
+      }
+
+      .subtitle-panel__inner {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        gap: 8px;
+        width: 660px;
+      }
+
+      .subtitle-panel__top {
+        display: flex;
+        height: 24px;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .subtitle-panel__brand {
+        display: inline-flex;
+        width: 84px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .subtitle-panel__cc-icon {
+        display: block;
+        width: 20px;
+        height: 20px;
+        flex: 0 0 auto;
+        background: url("assets/ai-miaoji/subtitle-logo-figma.svg") center / 18px 18px no-repeat;
+      }
+
+      .subtitle-panel__title {
+        color: rgb(255 255 255 / 0.8);
+        font: 400 14px/20px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .subtitle-panel__tools {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: rgb(255 255 255 / 0.72);
+      }
+
+      .subtitle-panel__tool-group {
+        display: flex;
+        height: 24px;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .subtitle-panel__chip,
+      .subtitle-panel__icon-button {
+        display: inline-flex;
+        height: 24px;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 13px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .subtitle-panel__chip {
+        gap: 5px;
+        padding: 0 6px;
+      }
+
+      .subtitle-panel__asset-icon {
+        display: block;
+        flex: 0 0 auto;
+        object-fit: contain;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .subtitle-panel__asset-icon--refresh,
+      .subtitle-panel__asset-icon--font {
+        width: 16px;
+        height: 16px;
+        margin: 1px;
+      }
+
+      .subtitle-panel__asset-icon--caret,
+      .subtitle-panel__asset-icon--source {
+        width: 18px;
+        height: 18px;
+      }
+
+      .subtitle-panel__asset-icon--settings {
+        width: 20px;
+        height: 20px;
+      }
+
+      .subtitle-panel__asset-icon--close {
+        width: 24px;
+        height: 24px;
+      }
+
+      .subtitle-panel__icon-button {
+        width: 24px;
+        padding: 0;
+        cursor: pointer;
+      }
+
+      .subtitle-panel__divider {
+        height: 1px;
+        background: url("assets/ai-miaoji/subtitle-divider-figma.svg") 0 0 / 660px 0.5px no-repeat;
+      }
+
+      .subtitle-panel__text {
+        margin: 8px 0 0;
+        width: 660px;
+        min-height: 48px;
+        color: rgb(255 255 255 / 0.92);
+        font: 400 14px/22px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .subtitle-panel__text.is-typing::after {
+        content: "";
+        display: inline-block;
+        width: 1px;
+        height: 1em;
+        margin-left: 2px;
+        background: currentColor;
+        opacity: 0.72;
+        vertical-align: -0.12em;
+        animation: typeCaret 720ms steps(1, end) infinite;
+      }
+
+      .subtitle-panel__icon-button:hover,
+      .subtitle-panel__icon-button:focus-visible {
+        background: rgb(255 255 255 / 0.12);
+      }
+
+      .subtitle-panel__icon-button:focus-visible {
+        outline: 2px solid rgb(138 200 255 / 0.95);
+        outline-offset: 2px;
+      }
+
+      .agent-panel__stop-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 5;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        border-radius: inherit;
+        background: #000;
+        opacity: 0;
+        pointer-events: none;
+        transform: scale(0.985);
+        transition:
+          opacity 220ms ease,
+          transform 220ms ease;
+      }
+
+      .agent-panel__stop-layer--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: scale(1);
+      }
+
+      .agent-panel__stop-close {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        display: grid;
+        width: 24px;
+        height: 24px;
+        place-items: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: rgb(255 255 255 / 0.72);
+        cursor: pointer;
+      }
+
+      .agent-panel__stop-close::before,
+      .agent-panel__stop-close::after {
+        content: "";
+        position: absolute;
+        width: 13px;
+        height: 1px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .agent-panel__stop-close::before {
+        transform: rotate(45deg);
+      }
+
+      .agent-panel__stop-close::after {
+        transform: rotate(-45deg);
+      }
+
+      .agent-panel__stop-view {
+        position: absolute;
+        left: 60px;
+        top: 90px;
+        display: flex;
+        width: 320px;
+        height: 420px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, 8px, 0);
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+      }
+
+      .agent-panel__stop-layer[data-agent-stop-state="confirm"] .agent-panel__stop-view--confirm,
+      .agent-panel__stop-layer[data-agent-stop-state="generating"] .agent-panel__stop-view--generating {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0);
+      }
+
+      .agent-panel__stop-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .agent-panel__stop-visual {
+        display: grid;
+        width: 280px;
+        height: 168px;
+        place-items: center;
+      }
+
+      .agent-panel__stop-icon {
+        display: block;
+        width: 80px;
+        height: 80px;
+        object-fit: contain;
+        -webkit-user-drag: none;
+        user-select: none;
+      }
+
+      .agent-panel__stop-title {
+        margin: 0;
+        color: #fff;
+        font: 700 20px/36px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-panel__stop-copy {
+        width: 320px;
+        margin: 12px 0 0;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-panel__stop-actions {
+        display: grid;
+        width: 240px;
+        gap: 20px;
+      }
+
+      .agent-panel__stop-button {
+        display: inline-flex;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+        padding: 0 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font: 400 16px/21px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .agent-panel__stop-button--primary {
+        border: 0;
+        background: #fff;
+        color: #18181b;
+      }
+
+      .agent-panel__stop-button--secondary {
+        border: 0.5px solid rgb(255 255 255 / 0.24);
+        background: rgb(255 255 255 / 0.08);
+        color: rgb(255 255 255 / 0.8);
+      }
+
+      @keyframes agentWave {
+        0% {
+          opacity: 0.52;
+          transform: scaleY(var(--wave-rest));
+        }
+
+        45% {
+          opacity: 0.96;
+          transform: scaleY(1);
+        }
+
+        100% {
+          opacity: 0.36;
+          transform: scaleY(0.36);
+        }
+      }
+
+      @keyframes typeCaret {
+        0%,
+        45% {
+          opacity: 0.75;
+        }
+
+        46%,
+        100% {
+          opacity: 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .agent-waveform span,
+        .agent-typewriter.is-typing::after {
+          animation: none;
+        }
+      }
+
+      .summary-sheet {
+        position: absolute;
+        left: 217px;
+        top: 82px;
+        z-index: 8;
+        width: 1166px;
+        height: 770px;
+        overflow: hidden;
+        color: #fff;
+        border: 1px solid rgb(255 255 255 / 0.1);
+        border-radius: 12px;
+        background: #1f1f1f;
+        box-shadow:
+          inset 0 0 0 1px rgb(255 255 255 / 0.035),
+          inset 0 -1px 0 rgb(255 255 255 / 0.14),
+          0 4px 20px rgb(0 0 0 / 0.06),
+          0 28px 80px rgb(0 0 0 / 0.36);
+        opacity: 0;
+        pointer-events: none;
+        transform: translate3d(0, 28px, 0) scale(0.965);
+        will-change: transform, opacity;
+      }
+
+      .summary-sheet::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 30;
+        border: 1px solid rgb(255 255 255 / 0.11);
+        border-radius: 12px;
+        pointer-events: none;
+      }
+
+      .summary-sheet::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 31;
+        height: 1px;
+        background: rgb(255 255 255 / 0.2);
+        pointer-events: none;
+      }
+
+      .summary-sheet--visible {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      .minutes-window__topbar {
+        display: flex;
+        height: 52px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 14px 8px 16px;
+      }
+
+      .minutes-window__tabs {
+        display: flex;
+        min-width: 446px;
+        gap: 16px;
+        align-items: center;
+        overflow: hidden;
+      }
+
+      .minutes-window__nav {
+        display: flex;
+        gap: 4px;
+      }
+
+      .minutes-window__icon-btn,
+      .minutes-window__chrome-btn,
+      .minutes-editor__tool {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        background: transparent;
+        color: rgb(255 255 255 / 0.72);
+        font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        cursor: default;
+      }
+
+      .minutes-window__icon-btn,
+      .minutes-window__chrome-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+
+      .minutes-window__tab-strip {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .minutes-window__tab {
+        display: flex;
+        width: 168px;
+        height: 34px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 12px;
+        border-radius: 8px;
+        color: rgb(255 255 255 / 0.72);
+        font: 400 13px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-window__tab--active {
+        width: 224px;
+        background: #000;
+        color: rgb(255 255 255 / 0.92);
+        box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.04);
+      }
+
+      .minutes-window__tab--rich {
+        display: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-window__tab--summary {
+        width: 168px;
+        background: transparent;
+        color: rgb(255 255 255 / 0.72);
+        box-shadow: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-window__tab--rich {
+        display: flex;
+        width: 200px;
+        background: #000;
+        color: rgb(255 255 255 / 0.92);
+        box-shadow: inset 0 0 0 0.5px rgb(255 255 255 / 0.04);
+      }
+
+      .minutes-window__tab-name {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+      }
+
+      .minutes-window__home-icon {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        flex: 0 0 auto;
+        background: url("assets/ai-miaoji/minutes-window/home-icon.svg") center / 14px 14px no-repeat;
+      }
+
+      .minutes-window__tab-icon {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border-radius: 6px;
+        background: url("assets/ai-miaoji/recording-note-icon-figma.svg") center / 20px 20px no-repeat;
+      }
+
+      .minutes-window__tab-close {
+        color: rgb(255 255 255 / 0.26);
+        font: 400 18px/1 "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-window__global {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding-left: 64px;
+      }
+
+      .minutes-window__account {
+        position: relative;
+        display: inline-block;
+        width: 48px;
+        height: 28px;
+        flex: 0 0 auto;
+        padding: 0;
+        border-radius: 100px;
+        background: url("assets/ai-miaoji/minutes-user-avatar-pill@3x.png") center / 48px 28px no-repeat;
+      }
+
+      .minutes-window__account::before {
+        content: none;
+      }
+
+      .minutes-window__account::after {
+        content: none;
+      }
+
+      .summary-sheet__button--reset {
+        cursor: pointer;
+      }
+
+      .minutes-window__content {
+        position: relative;
+        height: 718px;
+        margin: 0 8px 8px;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #0f0f0f;
+      }
+
+      .minutes-window__workspace {
+        position: absolute;
+        inset: 0;
+        border-radius: 0 8px 8px 0;
+        background: #111;
+      }
+
+      .minutes-ai-toggle {
+        position: absolute;
+        left: 16px;
+        top: 12px;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        border: 1px solid rgb(127 220 164 / 0.3);
+        border-radius: 7px;
+        background: rgb(255 255 255 / 0.04);
+        box-shadow:
+          inset 0 0 0 1px rgb(255 255 255 / 0.05),
+          0 0 0 0.5px rgb(127 220 164 / 0.1);
+      }
+
+      .minutes-ai-toggle::before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 5px;
+        width: 19px;
+        height: 17px;
+        background: url("assets/ai-miaoji/minutes-ai-toggle-union-figma.svg") center / 19px 17px no-repeat;
+      }
+
+      .minutes-main {
+        position: absolute;
+        left: 135px;
+        top: 0;
+        width: 880px;
+        height: 640px;
+      }
+
+      .summary-sheet--rich-editing .minutes-main {
+        height: 710px;
+      }
+
+      .minutes-editor {
+        display: flex;
+        height: 52px;
+        flex-direction: column;
+        justify-content: flex-start;
+        padding-top: 12px;
+        border-bottom: 0.5px solid rgb(255 255 255 / 0.1);
+      }
+
+      .minutes-editor__row {
+        display: flex;
+        height: 28px;
+        align-items: center;
+        gap: 10px;
+        overflow: hidden;
+      }
+
+      .minutes-editor__tool {
+        min-width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        padding: 0 4px;
+        font-size: 13px;
+      }
+
+      .minutes-editor__tool:not(.minutes-editor__tool--wide) {
+        font-size: 0;
+      }
+
+      .minutes-editor__tool::before {
+        display: block;
+        color: currentColor;
+        font: 600 15px/1 "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-editor__tool[data-icon]::before {
+        content: none !important;
+      }
+
+      .minutes-editor__tool[disabled] {
+        opacity: 0.2;
+      }
+
+      .minutes-editor__tool--wide {
+        min-width: 44px;
+        gap: 4px;
+      }
+
+      .minutes-editor__tool--export {
+        opacity: 0.88;
+        cursor: pointer;
+      }
+
+      .minutes-editor__tool[aria-label="撤销"]::before {
+        content: "↶";
+      }
+
+      .minutes-editor__tool[aria-label="重做"]::before {
+        content: "↷";
+      }
+
+      .minutes-editor__tool[aria-label="保存"]::before {
+        content: "□";
+        font-size: 11px;
+      }
+
+      .minutes-editor__tool[aria-label="字体颜色"]::before {
+        content: "A";
+      }
+
+      .minutes-editor__tool[aria-label="高亮"]::before {
+        content: "";
+        width: 14px;
+        height: 10px;
+        transform: skewX(-8deg);
+        border-radius: 1px;
+        background: currentColor;
+      }
+
+      .minutes-editor__tool[aria-label="加粗"]::before {
+        content: "B";
+        font-weight: 800;
+      }
+
+      .minutes-editor__tool[aria-label="斜体"]::before {
+        content: "I";
+        font-style: italic;
+      }
+
+      .minutes-editor__tool[aria-label="下划线"]::before {
+        content: "U";
+        text-decoration: underline;
+      }
+
+      .minutes-editor__tool[aria-label="删除线"]::before {
+        content: "S";
+        text-decoration: line-through;
+      }
+
+      .minutes-editor__tool[aria-label="对齐"]::before {
+        content: "☰";
+      }
+
+      .minutes-editor__tool[aria-label="无序列表"]::before {
+        content: "•";
+        font-size: 18px;
+      }
+
+      .minutes-editor__tool[aria-label="有序列表"]::before {
+        content: "1.";
+        font-size: 13px;
+      }
+
+      .minutes-editor__tool[aria-label="增加缩进"]::before {
+        content: "→";
+      }
+
+      .minutes-editor__tool[aria-label="减少缩进"]::before {
+        content: "←";
+      }
+
+      .minutes-editor__tool[aria-label="更多"]::before {
+        content: "···";
+      }
+
+      .minutes-editor__tool[aria-label="查找替换"]::before {
+        content: "⌕";
+      }
+
+      .minutes-editor__tool--export::before {
+        content: "⇩";
+      }
+
+      .minutes-editor__divider {
+        width: 1px;
+        height: 16px;
+        background: rgb(255 255 255 / 0.16);
+      }
+
+      .minutes-editor {
+        height: 56px;
+        padding-top: 11px;
+        border-bottom-color: rgb(255 255 255 / 0.1);
+      }
+
+      .minutes-editor__row {
+        height: 32px;
+        gap: 8px;
+        padding: 0 20px;
+      }
+
+      .minutes-editor__tool {
+        box-sizing: border-box;
+        min-width: 27px;
+        height: 30px;
+        padding: 0;
+        outline: 0;
+        border-radius: 4px;
+        color: rgb(255 255 255 / 0.28);
+        background: transparent;
+        font: 600 15px/28px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .minutes-editor__tool[disabled] {
+        opacity: 1;
+      }
+
+      .minutes-editor__tool:not(.minutes-editor__tool--wide) {
+        width: 27px;
+        font-size: 0;
+      }
+
+      .minutes-editor__tool::before {
+        content: none;
+      }
+
+      .minutes-editor__tool[data-icon]::before {
+        content: "";
+        display: block;
+        width: 15px;
+        height: 15px;
+        flex: 0 0 auto;
+        color: currentColor;
+        background: currentColor;
+      }
+
+      .minutes-editor__tool[data-icon="undo"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.1 4.2 3.7 6.6 6.1 9l.9-.9-1-1h3.8c1.7 0 2.8 1 2.8 2.5 0 1.4-1.1 2.4-2.7 2.4H7.1v1.3h2.8c2.4 0 4.1-1.5 4.1-3.7 0-2.2-1.7-3.8-4.2-3.8H6l1-1-.9-.6Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.1 4.2 3.7 6.6 6.1 9l.9-.9-1-1h3.8c1.7 0 2.8 1 2.8 2.5 0 1.4-1.1 2.4-2.7 2.4H7.1v1.3h2.8c2.4 0 4.1-1.5 4.1-3.7 0-2.2-1.7-3.8-4.2-3.8H6l1-1-.9-.6Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="redo"]::before {
+        transform: scaleX(-1);
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.1 4.2 3.7 6.6 6.1 9l.9-.9-1-1h3.8c1.7 0 2.8 1 2.8 2.5 0 1.4-1.1 2.4-2.7 2.4H7.1v1.3h2.8c2.4 0 4.1-1.5 4.1-3.7 0-2.2-1.7-3.8-4.2-3.8H6l1-1-.9-.6Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6.1 4.2 3.7 6.6 6.1 9l.9-.9-1-1h3.8c1.7 0 2.8 1 2.8 2.5 0 1.4-1.1 2.4-2.7 2.4H7.1v1.3h2.8c2.4 0 4.1-1.5 4.1-3.7 0-2.2-1.7-3.8-4.2-3.8H6l1-1-.9-.6Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="save"]::before {
+        width: 8px;
+        height: 8px;
+        border: 1.5px solid currentColor;
+        background: transparent;
+      }
+
+      .minutes-editor__tool[data-icon="highlight"]::before {
+        width: 16px;
+        height: 10px;
+        border-radius: 1px;
+        transform: skewX(-8deg);
+      }
+
+      .minutes-editor__tool[data-icon="align"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4h10v1.4H3V4Zm0 3.3h10v1.4H3V7.3Zm0 3.3h10V12H3v-1.4Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M3 4h10v1.4H3V4Zm0 3.3h10v1.4H3V7.3Zm0 3.3h10V12H3v-1.4Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="bullet"]::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+      }
+
+      .minutes-editor__tool[data-icon="indent"]::before,
+      .minutes-editor__tool[data-icon="outdent"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.8 4.2 13.2 8l-3.4 3.8-.95-.86 1.9-2.13H3V7.2h7.75l-1.9-2.13.95-.86Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M9.8 4.2 13.2 8l-3.4 3.8-.95-.86 1.9-2.13H3V7.2h7.75l-1.9-2.13.95-.86Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="outdent"]::before {
+        transform: scaleX(-1);
+      }
+
+      .minutes-editor__tool[data-icon="more"]::before {
+        width: 18px;
+        height: 4px;
+        background: radial-gradient(circle, currentColor 0 2px, transparent 2.1px) 0 0 / 7px 4px repeat-x;
+      }
+
+      .minutes-editor__tool[data-icon="search"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.1 3.2a3.9 3.9 0 0 1 3.08 6.28l2.62 2.62-.99.99-2.62-2.62A3.9 3.9 0 1 1 7.1 3.2Zm0 1.4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.1 3.2a3.9 3.9 0 0 1 3.08 6.28l2.62 2.62-.99.99-2.62-2.62A3.9 3.9 0 1 1 7.1 3.2Zm0 1.4a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="download"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.2 2h1.6v7.05l2.35-2.35 1.13 1.13L8 12.1 3.72 7.83 4.85 6.7 7.2 9.05V2ZM3 13h10v1.5H3V13Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7.2 2h1.6v7.05l2.35-2.35 1.13 1.13L8 12.1 3.72 7.83 4.85 6.7 7.2 9.05V2ZM3 13h10v1.5H3V13Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool[data-icon="share"]::before {
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.75 2.25 13.9 5.4l-3.15 3.15-1.06-1.06 1.34-1.34H8.72c-2.28 0-4.05 1.64-4.05 3.85v3.25h-1.5V10c0-3.07 2.44-5.35 5.55-5.35h2.31L9.69 3.31l1.06-1.06Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.75 2.25 13.9 5.4l-3.15 3.15-1.06-1.06 1.34-1.34H8.72c-2.28 0-4.05 1.64-4.05 3.85v3.25h-1.5V10c0-3.07 2.44-5.35 5.55-5.35h2.31L9.69 3.31l1.06-1.06Z'/%3E%3C/svg%3E") center / 16px 16px no-repeat;
+      }
+
+      .minutes-editor__tool--wide {
+        min-width: 54px;
+        padding: 0 7px;
+        color: rgb(255 255 255 / 0.2);
+        font-size: 14px;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      .minutes-editor__tool[data-icon="ordered"] {
+        color: rgb(255 255 255 / 0.2);
+        font-size: 14px;
+      }
+
+      .minutes-editor__tool[data-icon="text-color"],
+      .minutes-editor__tool[data-icon="bold"],
+      .minutes-editor__tool[data-icon="italic"],
+      .minutes-editor__tool[data-icon="underline"],
+      .minutes-editor__tool[data-icon="strike"],
+      .minutes-editor__tool[data-icon="ordered"] {
+        font-size: 15px;
+      }
+
+      .minutes-editor__tool[data-icon="text-color"]::before,
+      .minutes-editor__tool[data-icon="bold"]::before,
+      .minutes-editor__tool[data-icon="italic"]::before,
+      .minutes-editor__tool[data-icon="underline"]::before,
+      .minutes-editor__tool[data-icon="strike"]::before,
+      .minutes-editor__tool[data-icon="ordered"]::before {
+        content: none;
+      }
+
+      .minutes-editor__tool[data-icon="bold"] {
+        font-weight: 800;
+      }
+
+      .minutes-editor__tool[data-icon="italic"] {
+        font-style: italic;
+      }
+
+      .minutes-editor__tool[data-icon="underline"] {
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+
+      .minutes-editor__tool[data-icon="strike"] {
+        text-decoration: line-through;
+      }
+
+      .minutes-editor__tool--export {
+        color: rgb(255 255 255 / 0.42);
+        opacity: 1;
+      }
+
+      .minutes-editor__tool--share {
+        color: rgb(255 255 255 / 0.42);
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      .minutes-editor__divider {
+        width: 1px;
+        height: 18px;
+        margin: 0 6px;
+        background: rgb(255 255 255 / 0.12);
+      }
+
+      .minutes-editor__tool[data-icon]::before {
+        content: none !important;
+        display: none !important;
+      }
+
+      .minutes-editor__icon {
+        display: block;
+        width: 16px;
+        height: 16px;
+        flex: 0 0 auto;
+        opacity: 0.28;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .minutes-editor__tool--export .minutes-editor__icon,
+      .minutes-editor__tool--share .minutes-editor__icon {
+        width: 18px;
+        height: 18px;
+        opacity: 0.72;
+      }
+
+      .minutes-rich-actions {
+        display: none;
+        height: 60px;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 16px 0 12px;
+      }
+
+      .minutes-rich-actions__group {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .minutes-rich-action {
+        display: inline-flex;
+        height: 32px;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        padding: 0 16px;
+        border: 0.5px solid rgb(255 255 255 / 0.16);
+        border-radius: 12px;
+        color: rgb(255 255 255 / 0.94);
+        background: rgb(255 255 255 / 0.08);
+        box-shadow: 0 0 20px rgb(0 0 0 / 0.06);
+        font: 500 14px/22px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+        white-space: nowrap;
+      }
+
+      .minutes-rich-action img {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+        opacity: 0.92;
+        pointer-events: none;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-editor {
+        display: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-rich-actions {
+        display: flex;
+      }
+
+      .minutes-header {
+        padding-top: 32px;
+      }
+
+      .summary-sheet__title {
+        margin: 0;
+        color: rgb(255 255 255 / 0.92);
+        font: 700 24px/34px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-header__tags {
+        display: flex;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .summary-sheet__tag {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 10px;
+        border: 0.5px solid rgb(255 255 255 / 0.1);
+        border-radius: 6px;
+        background: rgb(255 255 255 / 0.08);
+        color: rgb(255 255 255 / 0.48);
+        font: 400 12px/18px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        white-space: nowrap;
+      }
+
+      .minutes-mode-tabs {
+        position: relative;
+        display: flex;
+        height: 40px;
+        align-items: flex-start;
+        gap: 44px;
+        margin-top: 32px;
+        border-bottom: 1px solid rgb(255 255 255 / 0.1);
+      }
+
+      .minutes-mode-tabs__button {
+        position: relative;
+        display: inline-flex;
+        width: 72px;
+        height: 28px;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: rgb(255 255 255 / 0.44);
+        font: 600 16px/28px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .minutes-mode-tabs__button--active {
+        color: rgb(255 255 255 / 0.92);
+      }
+
+      .minutes-mode-tabs__button--active::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -13px;
+        width: 74px;
+        height: 3px;
+        border-radius: 999px 999px 0 0;
+        background: #3b82ff;
+        transform: translateX(-50%);
+      }
+
+      .minutes-content-scroll {
+        position: absolute;
+        left: 0;
+        right: -117px;
+        top: 52px;
+        bottom: 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        padding-bottom: 104px;
+        scrollbar-color: rgb(255 255 255 / 0.24) transparent;
+        scrollbar-width: thin;
+      }
+
+      .summary-sheet--rich-editing .minutes-content-scroll {
+        top: 60px;
+        padding-bottom: 0;
+      }
+
+      .minutes-content-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+
+      .minutes-content-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .minutes-content-scroll::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgb(255 255 255 / 0.24);
+      }
+
+      .minutes-scroll-inner {
+        width: 880px;
+        min-height: 1728px;
+      }
+
+      .summary-sheet--rich-editing .minutes-scroll-inner {
+        min-height: 1720px;
+      }
+
+      .minutes-rich {
+        box-sizing: border-box;
+        width: 880px;
+        min-height: 1460px;
+        margin-top: 40px;
+        padding: 40px;
+        border-radius: 8px;
+        background: #060606;
+      }
+
+      .minutes-rich--figma {
+        position: relative;
+        min-height: 1460px;
+        padding: 40px;
+        overflow: visible;
+        border-radius: 8px;
+        background: #060606;
+      }
+
+      .summary-sheet--rich-editing .minutes-header,
+      .summary-sheet--rich-editing .minutes-mode-tabs {
+        display: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-ai-toggle {
+        display: none !important;
+      }
+
+      .summary-sheet--rich-editing .minutes-rich--figma {
+        margin-top: 0;
+      }
+
+      .summary-sheet--rich-editing .minutes-rich__hover-edit {
+        display: none;
+      }
+
+      .summary-sheet--rich-editing .minutes-player {
+        display: none;
+      }
+
+      .minutes-rich__figma {
+        display: none;
+        width: 880px;
+        height: auto;
+        user-select: none;
+        pointer-events: none;
+        -webkit-user-drag: none;
+      }
+
+      .minutes-rich__hover-edit {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 36px;
+        padding: 0 15px;
+        border: 0;
+        border-radius: 10px;
+        color: rgb(255 255 255 / 0.88);
+        background: rgb(31 31 35 / 0.94);
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 0.08),
+          0 10px 24px rgb(0 0 0 / 0.28);
+        opacity: 0;
+        transform: translateY(-4px);
+        pointer-events: none;
+        cursor: default;
+        transition: opacity 160ms ease, transform 160ms ease, background 160ms ease;
+        font: 500 14px/20px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-rich__hover-edit::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        background: currentColor;
+        -webkit-mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 20h4.1L19.35 8.75a2.12 2.12 0 0 0 0-3L18.25 4.65a2.12 2.12 0 0 0-3 0L4 15.9V20Zm2-2v-1.27L16.66 6.07l1.27 1.27L7.27 18H6Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+        mask: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 20h4.1L19.35 8.75a2.12 2.12 0 0 0 0-3L18.25 4.65a2.12 2.12 0 0 0-3 0L4 15.9V20Zm2-2v-1.27L16.66 6.07l1.27 1.27L7.27 18H6Z' fill='black'/%3E%3C/svg%3E") center / contain no-repeat;
+      }
+
+      .minutes-rich--figma:hover .minutes-rich__hover-edit,
+      .minutes-rich__hover-edit:focus-visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .minutes-rich__hover-edit:hover {
+        background: rgb(38 38 44 / 0.98);
+      }
+
+      .minutes-rich__cover-title {
+        margin: 0 0 20px;
+        color: rgb(255 255 255 / 0.92);
+        font: 700 24px/34px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+        text-rendering: geometricPrecision;
+      }
+
+      .minutes-rich__intro {
+        padding: 14px 20px;
+        border: 0.5px solid rgb(59 131 247 / 0.72);
+        border-radius: 6px;
+        background: #122d55;
+        box-shadow: inset 0 0 0 1px rgb(69 142 255 / 0.16);
+      }
+
+      .minutes-rich__intro p {
+        margin: 0;
+        color: rgb(255 255 255 / 0.86);
+        font: 400 14px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .summary-sheet__eyebrow {
+        display: none;
+      }
+
+      .minutes-section {
+        margin-top: 40px;
+      }
+
+      .minutes-section__title {
+        margin: 0 0 18px;
+        color: rgb(255 255 255 / 0.92);
+        font: 700 22px/32px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .summary-sheet__grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+
+      .summary-sheet__card {
+        overflow: hidden;
+        min-height: 178px;
+        padding: 22px 24px;
+        border: 0.5px solid rgb(255 255 255 / 0.12);
+        border-radius: 8px;
+        background: rgb(255 255 255 / 0.12);
+      }
+
+      .summary-sheet__card--tall {
+        height: 527px;
+      }
+
+      .summary-sheet__card--blue {
+        border-color: #3b83f7;
+      }
+
+      .summary-sheet__card--orange {
+        border-color: #fb923c;
+      }
+
+      .summary-sheet__card--red {
+        border-color: #fb7181;
+      }
+
+      .summary-sheet__card--footer {
+        grid-column: 1 / -1;
+        min-height: 144px;
+        border-color: #e879f9;
+        background: rgb(248 75 216 / 0.2);
+      }
+
+      .minutes-card__number {
+        display: inline-flex;
+        width: 30px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #3b83f7;
+        color: #fff;
+        font: 700 12px/20px Roboto, "Microsoft YaHei UI", sans-serif;
+      }
+
+      .summary-sheet__card h3 {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin: 12px 0 10px;
+        color: rgb(255 255 255 / 0.92);
+        font: 700 17px/26px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .minutes-card__pill {
+        display: inline-flex;
+        align-items: center;
+        height: 19px;
+        padding: 0 8px;
+        border: 0.5px solid #3b83f7;
+        border-radius: 30px;
+        color: #3b83f7;
+        font: 400 11px/13px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .summary-sheet__card p {
+        margin: 0;
+        color: rgb(255 255 255 / 0.8);
+        font: 400 14px/22px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .minutes-highlight {
+        padding: 0 2px;
+        border-radius: 1px;
+        background: rgb(164 126 45 / 0.7);
+        color: rgb(255 255 255 / 0.92);
+      }
+
+      .summary-sheet__list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .summary-sheet__list li {
+        position: relative;
+        padding-left: 14px;
+        color: rgb(255 255 255 / 0.8);
+        font: 400 14px/22px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+        letter-spacing: 0;
+      }
+
+      .summary-sheet__list li::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 8px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+
+      .minutes-visual {
+        height: 335px;
+        margin-top: 14px;
+        overflow: hidden;
+        padding: 0;
+        border-radius: 4px;
+        background: #f7f4ef;
+        color: #1f2933;
+      }
+
+      .minutes-visual__title {
+        margin: 0 0 18px;
+        color: #1f2933;
+        text-align: center;
+        font: 700 18px/24px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-pie {
+        width: 164px;
+        height: 164px;
+        margin: 8px auto 18px;
+        border-radius: 50%;
+        background: conic-gradient(#4db6e9 0 25%, #a465c9 25% 35%, #ff8b28 35% 100%);
+        box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+      }
+
+      .minutes-visual__legend {
+        display: grid;
+        gap: 6px;
+        color: #2f3842;
+        font: 400 12px/16px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-conversion {
+        height: 335px;
+        margin-top: 14px;
+        overflow: hidden;
+        padding: 0;
+        border-radius: 4px;
+        background:
+          linear-gradient(180deg, rgb(70 42 16 / 0.45), rgb(18 19 24 / 0.95)),
+          #2a201b;
+      }
+
+      .minutes-chart-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        image-rendering: auto;
+        user-select: none;
+        -webkit-user-drag: none;
+      }
+
+      .minutes-chart-image--conversion {
+        height: auto;
+        object-fit: contain;
+        object-position: left top;
+      }
+
+      .minutes-conversion__title {
+        margin: 0 0 14px;
+        color: #fff8dd;
+        text-align: center;
+        font: 700 20px/28px "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      }
+
+      .minutes-conversion__matrix {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+
+      .minutes-conversion__cell {
+        min-height: 42px;
+        padding: 6px;
+        border-radius: 4px;
+        background: rgb(255 255 255 / 0.82);
+        color: #59351f;
+        text-align: center;
+        font: 700 16px/20px Roboto, "Microsoft YaHei UI", sans-serif;
+      }
+
+      .minutes-conversion__cell span {
+        display: block;
+        color: #6b4b33;
+        font: 400 10px/12px "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+      }
+
+      .minutes-line-chart {
+        height: 68px;
+        margin-top: 18px;
+        border-radius: 6px;
+        background:
+          linear-gradient(135deg, transparent 46%, #ffb347 47% 49%, transparent 50%),
+          linear-gradient(45deg, transparent 44%, #38bdf8 45% 47%, transparent 48%),
+          rgb(0 0 0 / 0.28);
+      }
+
+      .minutes-player {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 3;
+        height: 78px;
+        border-top: 0.5px solid rgb(255 255 255 / 0.1);
+        border-right: 0.5px solid rgb(255 255 255 / 0.08);
+        border-bottom: 0.5px solid rgb(255 255 255 / 0.16);
+        border-left: 0.5px solid rgb(255 255 255 / 0.08);
+        border-radius: 0 0 12px 12px;
+        background: #111;
+      }
+
+      .minutes-player__bar {
+        position: absolute;
+        left: 135px;
+        right: 135px;
+        bottom: 24px;
+        display: flex;
+        height: 28px;
+        align-items: center;
+        gap: 24px;
+      }
+
+      .minutes-player__controls {
+        display: flex;
+        gap: 16px;
+      }
+
+      .minutes-player__button {
+        width: 28px;
+        height: 28px;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        color: rgb(255 255 255 / 0.72);
+        font-size: 15px;
+      }
+
+      .minutes-player__progress {
+        display: flex;
+        flex: 1 1 auto;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .minutes-player__time {
+        color: rgb(255 255 255 / 0.48);
+        font: 400 14px/1 Roboto, "Microsoft YaHei UI", sans-serif;
+      }
+
+      .minutes-player__track {
+        display: flex;
+        flex: 1 1 auto;
+        gap: 3px;
+        min-width: 0;
+      }
+
+      .minutes-player__track span {
+        height: 4px;
+        flex: 1 1 auto;
+        border-radius: 1px;
+        background: rgb(255 255 255 / 0.08);
+      }
+
+      .minutes-player__track span:nth-child(2),
+      .minutes-player__track span:nth-child(6) {
+        flex: 0 0 48px;
+      }
+
+      .minutes-player__track span:nth-child(3),
+      .minutes-player__track span:nth-child(7) {
+        flex: 0 0 30px;
+      }
+
+      .minutes-player__track span:nth-child(4) {
+        flex: 0 0 80px;
+      }
+
+      .minutes-player__speed {
+        color: rgb(255 255 255 / 0.8);
+        font: 400 16px/12px Roboto, "Microsoft YaHei UI", sans-serif;
+      }
+
+      @keyframes animate__fadeInDown {
+        0% {
+          opacity: 0;
+          transform: translate3d(0, -42px, 0);
+          filter: blur(4px) drop-shadow(0 0 0 rgb(0 0 0 / 0));
+        }
+
+        100% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0);
+          filter: blur(0) drop-shadow(0 14px 26px rgb(0 0 0 / 0.34));
+        }
+      }
+
+      @keyframes aui-prompt-collapse {
+        0% {
+          opacity: 1;
+          transform: translate3d(0, 0, 0) scale(1);
+          filter: blur(0) drop-shadow(0 14px 26px rgb(0 0 0 / 0.34));
+        }
+
+        100% {
+          opacity: 0;
+          transform: translate3d(0, -82px, 0) scale(0.72, 0.42);
+          filter: blur(8px) drop-shadow(0 0 0 rgb(0 0 0 / 0));
+        }
+      }
+
+      .aui-prompt.aui-prompt--dismissed {
+        pointer-events: none;
+        animation: aui-prompt-collapse 460ms cubic-bezier(0.5, 0, 0.2, 1) forwards;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .aui-prompt {
+          animation: none;
+          opacity: 1;
+          transform: none;
+        }
+
+        .aui-prompt.aui-prompt--dismissed {
+          animation: none;
+          opacity: 0;
+          transform: translate3d(0, -82px, 0) scale(0.72, 0.42);
+        }
+
+        .recording-island {
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="demo-shell" aria-label="AI 妙记完整交互链路演示">
+      <section class="figma-stage" data-node-id="588:10911" aria-label="AI 妙记主动感知默认页">
+        <img
+          class="figma-base figma-base--meeting"
+          src="assets/ai-miaoji/default-page@3x.png"
+          alt="多人视频会议中的 AI 妙记默认页"
+          draggable="false"
+        />
+        <img
+          class="figma-base figma-base--clean"
+          src="assets/ai-miaoji/desktop-clean@3x.png"
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+        />
+
+        <aside class="aui-prompt" data-node-id="617:10176" aria-label="灵犀主动服务提示">
+          <img
+            class="aui-prompt__image"
+            src="assets/ai-miaoji/aui-confirm-prompt@3x.png"
+            alt=""
+            draggable="false"
+          />
+          <video
+            class="aui-prompt__orb"
+            src="assets/qiu-dark.webm"
+            autoplay
+            muted
+            loop
+            playsinline
+            aria-hidden="true"
+          ></video>
+          <span class="sr-only" data-node-id="617:10207">
+            感知到您可能正在会议中，需要我帮你记录并生成总结吗？
+          </span>
+          <div class="aui-prompt__actions" aria-hidden="false">
+            <button class="aui-prompt__button aui-prompt__button--ghost" type="button" data-node-id="617:10189">
+              忽略（<span class="aui-prompt__countdown">8s</span>）
+            </button>
+            <button class="aui-prompt__button aui-prompt__button--primary" type="button" data-node-id="617:10191">
+              帮我记录
+            </button>
+          </div>
+        </aside>
+
+        <aside class="recording-island" data-node-id="616:14258" aria-label="AI 妙记录制中">
+          <div class="recording-island__surface"></div>
+          <div class="recording-island__content">
+            <div class="recording-island__status">
+              <img
+                class="recording-island__note-icon"
+                src="assets/ai-miaoji/recording-note-icon-figma.svg"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+              <span class="recording-island__cc-icon" aria-hidden="true"></span>
+              <span class="recording-island__label"><span class="recording-island__mode-name">会议记录</span> <span class="recording-island__timer">00:00</span></span>
+            </div>
+            <div class="recording-island__actions">
+              <button class="recording-island__control recording-island__control--pause" type="button" aria-label="暂停记录" aria-pressed="false">
+                <span class="recording-island__pause-icon" aria-hidden="true"></span>
+              </button>
+              <button class="recording-island__control recording-island__control--stop" type="button" aria-label="停止记录并生成纪要">
+                <span class="recording-island__stop-icon" aria-hidden="true"></span>
+              </button>
+              <button class="recording-island__control recording-island__control--screenshot" type="button" aria-label="实时截图">
+                <img class="recording-island__screenshot-icon" src="assets/ai-miaoji/agent-tool-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+              </button>
+              <button class="recording-island__control recording-island__control--expand" type="button" aria-label="展开记录详情" aria-expanded="false">
+                <svg class="recording-island__expand-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                  <path d="M6.2 3.2H3.2v3" />
+                  <path d="M3.2 3.2 6.6 6.6" />
+                  <path d="M9.8 12.8h3v-3" />
+                  <path d="M12.8 12.8 9.4 9.4" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <button class="recording-island__switch" type="button" aria-label="切换到同传字幕">
+            <span class="recording-island__switch-icon recording-island__switch-icon--cc" aria-hidden="true"></span>
+            <span class="sr-only recording-island__switch-label">同传字幕</span>
+          </button>
+          <div class="recording-confirm" data-node-id="658:10500" aria-hidden="true">
+            <div class="recording-confirm__title" data-node-id="658:10504">
+              <video
+                class="recording-confirm__icon"
+                src="assets/qiu-dark.webm"
+                autoplay
+                muted
+                loop
+                playsinline
+                aria-hidden="true"
+              ></video>
+              <span class="recording-confirm__text">是否结束会议记录并生成总结，完成后自动通知你～</span>
+            </div>
+            <div class="recording-confirm__actions" data-node-id="658:10506">
+              <button class="recording-confirm__button recording-confirm__button--end" type="button" data-node-id="658:10507">
+                继续记录
+              </button>
+              <button class="recording-confirm__button recording-confirm__button--continue" type="button" data-node-id="658:10509">
+                结束并生成
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="final-summary-toast" data-node-id="696:11355" aria-label="会议纪要已生成提示" aria-hidden="true">
+          <div class="final-summary-toast__surface"></div>
+          <div class="final-summary-toast__content">
+            <div class="final-summary-toast__title">
+              <video class="final-summary-toast__orb" src="assets/qiu-dark.webm" autoplay muted loop playsinline aria-hidden="true"></video>
+              <span>已为您生成会议纪要，请点击查看</span>
+            </div>
+            <div class="final-summary-toast__card">
+              <img class="final-summary-toast__icon" src="assets/ai-miaoji/recording-note-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+              <div class="final-summary-toast__meta">
+                <div class="final-summary-toast__metric">
+                  <span class="final-summary-toast__metric-label">会议时长</span>
+                  <span class="final-summary-toast__metric-value"><strong>1</strong> 小时 <strong>50</strong> 分钟</span>
+                </div>
+                <span class="final-summary-toast__divider" aria-hidden="true"></span>
+                <div class="final-summary-toast__metric">
+                  <span class="final-summary-toast__metric-label">会议总结</span>
+                  <span class="final-summary-toast__metric-value"><strong>2345</strong> 字</span>
+                </div>
+              </div>
+            </div>
+            <div class="final-summary-toast__actions">
+              <button class="final-summary-toast__button final-summary-toast__button--ghost" type="button">
+                忽略（8s）
+              </button>
+              <button class="final-summary-toast__button final-summary-toast__button--primary" type="button">
+                查看会议纪要
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="agent-panel" aria-label="AI 妙记浮窗">
+          <header class="agent-panel__top">
+            <div class="agent-panel__brand">
+              <img src="assets/ai-miaoji/recording-note-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+              <span>AI妙记</span>
+            </div>
+            <button class="agent-panel__collapse" type="button" aria-label="收起 AI 妙记浮窗">
+              <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                <path d="M5 3H3v2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+                <path d="M3 3l4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+                <path d="M11 13h2v-2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+                <path d="M13 13 9 9" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" />
+              </svg>
+            </button>
+          </header>
+
+          <div class="agent-panel__body">
+            <nav class="agent-tabs" aria-label="AI 妙记内容切换">
+              <button class="agent-tabs__tab agent-tabs__tab--active" type="button" data-agent-tab="summary" aria-selected="true">AI 小结</button>
+              <button class="agent-tabs__tab" type="button" data-agent-tab="transcript" aria-selected="false">文字转录</button>
+            </nav>
+
+            <div class="agent-panel__feed agent-panel__feed--summary" data-agent-panel="summary">
+              <ol class="agent-timeline">
+                <li class="agent-timeline__item" data-meeting-time="0">
+                  <span class="agent-timeline__time">00:00</span>
+                  <div class="agent-timeline__content">
+                    <p class="agent-timeline__text agent-timeline__text--single">Hi~我是你的天禧妙记助手，记录开始...</p>
+                  </div>
+                </li>
+                <li class="agent-timeline__item agent-timeline__item--large" data-meeting-time="36">
+                  <span class="agent-timeline__time">00:36</span>
+                  <div class="agent-timeline__content">
+                    <h3 class="agent-timeline__title">会议记录功能设计与触发机制讨论</h3>
+                    <p class="agent-timeline__text">团队讨论了 AI 妙记应在多人会议、屏幕共享或持续语音场景下主动提示记录，但触发前需结合日程、参会人数和用户历史偏好，避免误打扰。</p>
+                  </div>
+                </li>
+                <li class="agent-timeline__item agent-timeline__item--large" data-meeting-time="105">
+                  <span class="agent-timeline__time">01:45</span>
+                  <div class="agent-timeline__content">
+                    <h3 class="agent-timeline__title">知识库与应答锦囊的关系</h3>
+                    <p class="agent-timeline__text">说话人提出，会议内容沉淀到知识库后，应反向服务后续问答和应答锦囊，让用户在复盘、追问和跨会议信息检索时能直接复用结论。</p>
+                  </div>
+                </li>
+                <li class="agent-timeline__item agent-timeline__item--large" data-meeting-time="192">
+                  <span class="agent-timeline__time">03:12</span>
+                  <div class="agent-timeline__content">
+                    <h3 class="agent-timeline__title">实时转录与小结生成范围</h3>
+                    <p class="agent-timeline__text">实时转录本身不是最终价值，重点应放在会中状态反馈、关键议题识别和会后结构化小结。下一步需要验证低置信场景下是否继续展示确认弹窗。</p>
+                  </div>
+                </li>
+              </ol>
+
+              <div class="agent-panel__status">我正在实时记录，1-3分钟后生成小结...</div>
+            </div>
+
+            <div class="agent-panel__feed agent-panel__feed--transcript agent-panel__feed--hidden" data-agent-panel="transcript" aria-hidden="true">
+              <div class="agent-transcript">
+                <article class="agent-transcript__entry agent-transcript__entry--pending" data-transcript-start="5">
+                  <div class="agent-transcript__speaker">
+                    <span class="agent-transcript__avatar">A</span>
+                    <span class="agent-transcript__meta">发言人A&nbsp;&nbsp;00:05</span>
+                  </div>
+                  <div class="agent-transcript__bubble">
+                    我倾向于让 AI 妙记在明确会议场景里主动提示，比如多人通话、共享屏幕或连续语音超过一段时间。但提示前要结合日程、参会人数和用户历史偏好，避免用户只是临时沟通也被打扰。
+                  </div>
+                </article>
+
+                <article class="agent-transcript__entry agent-transcript__entry--pending" data-transcript-start="45">
+                  <div class="agent-transcript__speaker">
+                    <span class="agent-transcript__avatar">B</span>
+                    <span class="agent-transcript__meta">发言人B&nbsp;&nbsp;00:45</span>
+                  </div>
+                  <div class="agent-transcript__bubble">
+                    会议记录沉淀到知识库以后，不能只停留在会后查看。后续用户追问结论、查找历史讨论，或者需要应答锦囊时，都应该能复用这次会议里已经确认过的信息。
+                  </div>
+                </article>
+
+                <article class="agent-transcript__entry agent-transcript__entry--pending" data-transcript-start="92">
+                  <div class="agent-transcript__speaker">
+                    <span class="agent-transcript__avatar">A</span>
+                    <span class="agent-transcript__meta">发言人A&nbsp;&nbsp;01:32</span>
+                  </div>
+                  <div class="agent-transcript__bubble">
+                    实时转录本身不是用户最终要买单的价值，关键是会中状态反馈、议题识别和会后结构化小结。低置信度场景下我们还是要保留确认弹窗，让用户决定是否继续生成总结。
+                  </div>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <footer class="agent-panel__footer">
+            <span class="agent-panel__runtime">00:00</span>
+            <div class="agent-waveform" aria-hidden="true">
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+              <span></span><span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="agent-panel__controls">
+              <button class="agent-panel__control agent-panel__control--play" type="button" aria-label="播放录音">
+                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M5 3.8v8.4L11.5 8 5 3.8Z" fill="currentColor" /></svg>
+              </button>
+              <button class="agent-panel__control agent-panel__control--stop" type="button" aria-label="停止记录">
+                <span class="recording-island__stop-icon" aria-hidden="true"></span>
+              </button>
+              <button class="agent-panel__tool" type="button" aria-label="截图工具">
+                <img class="agent-panel__tool-icon" src="assets/ai-miaoji/agent-tool-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                <span class="agent-panel__tool-divider" aria-hidden="true"></span>
+                <img class="agent-panel__tool-caret" src="assets/ai-miaoji/agent-tool-caret-figma.svg" alt="" aria-hidden="true" draggable="false" />
+              </button>
+            </div>
+          </footer>
+
+          <div class="agent-panel__stop-layer" data-agent-stop-state="confirm" aria-hidden="true">
+            <button class="agent-panel__stop-close" type="button" aria-label="关闭结束确认" data-agent-stop-action="close"></button>
+
+            <div class="agent-panel__stop-view agent-panel__stop-view--confirm">
+              <div class="agent-panel__stop-main">
+                <div class="agent-panel__stop-visual">
+                  <img class="agent-panel__stop-icon" src="assets/ai-miaoji/recording-note-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                </div>
+                <h2 class="agent-panel__stop-title">是否结束会议记录</h2>
+                <p class="agent-panel__stop-copy">结束后将开始生成会议总结，总结完成后我将自动通知你～</p>
+              </div>
+              <div class="agent-panel__stop-actions">
+                <button class="agent-panel__stop-button agent-panel__stop-button--primary" type="button" data-agent-stop-action="finish">
+                  结束并总结
+                </button>
+                <button class="agent-panel__stop-button agent-panel__stop-button--secondary" type="button" data-agent-stop-action="continue">
+                  继续记录
+                </button>
+              </div>
+            </div>
+
+            <div class="agent-panel__stop-view agent-panel__stop-view--generating">
+              <div class="agent-panel__stop-main">
+                <div class="agent-panel__stop-visual">
+                  <img class="agent-panel__stop-icon" src="assets/ai-miaoji/recording-note-icon-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                </div>
+              <h2 class="agent-panel__stop-title">会议结束，总结生成中</h2>
+                <p class="agent-panel__stop-copy">生成完成后会自动通知你，最终纪要将同步保存至「知识库」</p>
+              </div>
+              <div class="agent-panel__stop-actions">
+                <button class="agent-panel__stop-button agent-panel__stop-button--primary" type="button" data-agent-stop-action="done">
+                  知道了
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <aside class="subtitle-panel" aria-label="同传字幕浮窗" aria-hidden="true">
+          <div class="subtitle-panel__inner">
+            <header class="subtitle-panel__top">
+              <div class="subtitle-panel__brand">
+                <span class="subtitle-panel__cc-icon" aria-hidden="true"></span>
+                <span class="subtitle-panel__title">同传字幕</span>
+              </div>
+              <div class="subtitle-panel__tools">
+                <div class="subtitle-panel__tool-group" aria-hidden="true">
+                  <span class="subtitle-panel__chip">
+                    <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--refresh" src="assets/ai-miaoji/subtitle-refresh-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                    翻译为：中文
+                    <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--caret" src="assets/ai-miaoji/subtitle-caret-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                  </span>
+                  <span class="subtitle-panel__chip">
+                    <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--font" src="assets/ai-miaoji/subtitle-font-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                    标准字号
+                    <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--caret" src="assets/ai-miaoji/subtitle-caret-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                  </span>
+                  <span class="subtitle-panel__chip">
+                    <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--source" src="assets/ai-miaoji/subtitle-source-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                    显示原文
+                  </span>
+                </div>
+                <button class="subtitle-panel__icon-button" type="button" aria-label="字幕设置">
+                  <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--settings" src="assets/ai-miaoji/subtitle-settings-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                </button>
+                <button class="subtitle-panel__icon-button subtitle-panel__close" type="button" aria-label="收起同传字幕浮窗">
+                  <img class="subtitle-panel__asset-icon subtitle-panel__asset-icon--close" src="assets/ai-miaoji/subtitle-close-figma.svg" alt="" aria-hidden="true" draggable="false" />
+                </button>
+              </div>
+            </header>
+            <div class="subtitle-panel__divider" aria-hidden="true"></div>
+            <p class="subtitle-panel__text">我倾向于让 AI 妙记在明确会议场景里主动提示，比如多人通话、共享屏幕或连续语音超过一段时间。但提示前要结合日程、参会人数和用户历史偏好，避免误打扰。</p>
+          </div>
+        </aside>
+
+        <section class="summary-sheet minutes-window" aria-label="会议纪要窗口" data-node-id="705:13739">
+          <header class="minutes-window__topbar" aria-label="窗口标签栏">
+            <div class="minutes-window__tabs">
+              <div class="minutes-window__nav" aria-hidden="true">
+                <button class="minutes-window__icon-btn" type="button">‹</button>
+                <button class="minutes-window__icon-btn" type="button">›</button>
+              </div>
+              <div class="minutes-window__tab-strip">
+                <div class="minutes-window__tab">
+                  <span class="minutes-window__tab-name"><span class="minutes-window__home-icon" aria-hidden="true"></span>主页</span>
+                  <span class="minutes-window__tab-close" aria-hidden="true">×</span>
+                </div>
+                <div class="minutes-window__tab minutes-window__tab--active minutes-window__tab--summary">
+                  <span class="minutes-window__tab-name"><span class="minutes-window__tab-icon" aria-hidden="true"></span>会议纪要</span>
+                  <span class="minutes-window__tab-close" aria-hidden="true">×</span>
+                </div>
+                <div class="minutes-window__tab minutes-window__tab--rich">
+                  <span class="minutes-window__tab-name"><span class="minutes-window__tab-icon" aria-hidden="true"></span>图文模式</span>
+                  <span class="minutes-window__tab-close" aria-hidden="true">×</span>
+                </div>
+              </div>
+            </div>
+            <div class="minutes-window__global">
+              <span class="minutes-window__account" aria-hidden="true"></span>
+              <button class="minutes-window__chrome-btn" type="button" aria-label="最小化">−</button>
+              <button class="minutes-window__chrome-btn" type="button" aria-label="窗口化">□</button>
+              <button class="minutes-window__chrome-btn summary-sheet__button--reset" type="button" aria-label="关闭会议纪要">×</button>
+            </div>
+          </header>
+
+          <div class="minutes-window__content">
+            <div class="minutes-window__workspace">
+              <button class="minutes-ai-toggle" type="button" aria-label="展开 AI 问答区"></button>
+              <div class="minutes-main">
+                <div class="minutes-editor" aria-label="编辑栏">
+                  <div class="minutes-editor__row">
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="撤销" data-icon="undo"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/undo.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="重做" data-icon="redo"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/redo.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="保存" data-icon="save"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/square.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <span class="minutes-editor__divider" aria-hidden="true"></span>
+                    <button class="minutes-editor__tool minutes-editor__tool--wide" type="button" disabled>正文⌄</button>
+                    <span class="minutes-editor__divider" aria-hidden="true"></span>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="字体颜色" data-icon="text-color"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/text-color.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="高亮" data-icon="highlight"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/highlight.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="加粗" data-icon="bold"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/bold.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="斜体" data-icon="italic"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/italic.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="下划线" data-icon="underline"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/underline.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="删除线" data-icon="strike"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/strike.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <span class="minutes-editor__divider" aria-hidden="true"></span>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="对齐" data-icon="align"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/align.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="无序列表" data-icon="bullet"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/bullet.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="有序列表" data-icon="ordered"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/ordered.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="增加缩进" data-icon="indent"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/indent.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="减少缩进" data-icon="outdent"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/outdent.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <span class="minutes-editor__divider" aria-hidden="true"></span>
+                    <button class="minutes-editor__tool minutes-editor__tool--wide" type="button" disabled>插入⌄</button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="更多" data-icon="more"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/more.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool" type="button" disabled aria-label="查找替换" data-icon="search"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/search.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool minutes-editor__tool--export" type="button" aria-label="下载会议纪要" data-icon="download"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/download.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                    <button class="minutes-editor__tool minutes-editor__tool--share" type="button" aria-label="分享会议纪要" data-icon="share"><img class="minutes-editor__icon" src="assets/ai-miaoji/minutes-toolbar/share.svg" alt="" aria-hidden="true" draggable="false" /></button>
+                  </div>
+                </div>
+
+                <div class="minutes-rich-actions" aria-label="图文模式操作栏">
+                  <button class="minutes-rich-action minutes-rich-action--regen" type="button">
+                    <img src="assets/ai-miaoji/minutes-rich-editor/regen.svg" alt="" aria-hidden="true" draggable="false" />
+                    <span>重新生成</span>
+                  </button>
+                  <div class="minutes-rich-actions__group">
+                    <button class="minutes-rich-action" type="button">
+                      <img src="assets/ai-miaoji/minutes-rich-editor/edit.svg" alt="" aria-hidden="true" draggable="false" />
+                      <span>编辑</span>
+                    </button>
+                    <button class="minutes-rich-action" type="button">
+                      <img src="assets/ai-miaoji/minutes-rich-editor/save-image.svg" alt="" aria-hidden="true" draggable="false" />
+                      <span>保存图片</span>
+                    </button>
+                    <button class="minutes-rich-action" type="button">
+                      <img src="assets/ai-miaoji/minutes-rich-editor/save-pdf.svg" alt="" aria-hidden="true" draggable="false" />
+                      <span>保存PDF</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="minutes-content-scroll" data-node-id="705:12457">
+                  <div class="minutes-scroll-inner">
+                <div class="minutes-header">
+                  <p class="summary-sheet__eyebrow">MEETING SUMMARY</p>
+                  <h2 class="summary-sheet__title">电商月度数据复盘会</h2>
+                  <div class="minutes-header__tags" aria-label="会议标签">
+                    <span class="summary-sheet__tag">会议纪要</span>
+                    <span class="summary-sheet__tag">未收藏</span>
+                    <span class="summary-sheet__tag">+ 新增标签</span>
+                  </div>
+                </div>
+
+                <nav class="minutes-mode-tabs" aria-label="会议纪要模式">
+                  <button class="minutes-mode-tabs__button" type="button">全文概要</button>
+                  <button class="minutes-mode-tabs__button minutes-mode-tabs__button--active" type="button" aria-selected="true">图文模式</button>
+                  <button class="minutes-mode-tabs__button" type="button">文字转录</button>
+                  <button class="minutes-mode-tabs__button" type="button">发言总结</button>
+                  <button class="minutes-mode-tabs__button" type="button">我的笔记</button>
+                </nav>
+
+                  <article class="minutes-rich minutes-rich--figma" aria-label="图文模式会议纪要内容">
+                    <button class="minutes-rich__hover-edit" type="button" aria-label="编辑图文模式正文">编辑</button>
+                    <h3 class="minutes-rich__cover-title">电商月度数据复盘会</h3>
+                    <div class="minutes-rich__intro">
+                      <p>会议时间：2026-04-02 14：00 ~ 16：00</p>
+                      <p>会议摘要：本次会议围绕3月电商全维度运营数据开展专项复盘工作，以销量、流量、转化三大核心数据图表为核心依据，全面拆解本月运营数据表现，精准梳理数据波动趋势、异常节点及核心运营问题。同时，结合前期整理的话术优化手写标注要点，逐项核对落地情况，针对未完善、待优化的话术场景统一规范标准，最终研讨敲定4月电商运营三大核心优化策略，明确各模块工作方向与落地重点。</p>
+                    </div>
+
+                    <section class="minutes-section">
+                      <h3 class="minutes-section__title">3月运营数据复盘及核心问题总结</h3>
+                      <div class="summary-sheet__grid">
+                        <article class="summary-sheet__card summary-sheet__card--tall">
+                          <span class="minutes-card__number">01</span>
+                          <h3>核心数据复盘 <span class="minutes-card__pill">复盘</span></h3>
+                          <p>大促后销量呈平稳回落趋势，周末销量小幅回升；<mark class="minutes-highlight">流量来源中短视频引流占比65%，搜索流量占比25%，付费投放流量占比10%，</mark>付费流量转化效率高于自然流量</p>
+                          <div class="minutes-visual" aria-label="流量来源占比图">
+                            <img class="minutes-chart-image" src="assets/ai-miaoji/minutes-chart-traffic-source-raw.png" alt="流量来源占比图" draggable="false" />
+                          </div>
+                        </article>
+
+                        <article class="summary-sheet__card summary-sheet__card--tall">
+                          <span class="minutes-card__number">02</span>
+                          <h3>商品转化分析 <span class="minutes-card__pill">转化</span></h3>
+                          <p><mark class="minutes-highlight">新款转化仅8%，</mark>新款价格与卖点匹配度不足，需优化详情页</p>
+                          <div class="minutes-conversion" aria-label="商品转化率对比图">
+                            <img class="minutes-chart-image minutes-chart-image--conversion" src="assets/ai-miaoji/minutes-chart-conversion-raw.png" alt="商品转化率对比分析图" draggable="false" />
+                          </div>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section class="minutes-section">
+                      <h3 class="minutes-section__title">4月核心运营落地策略</h3>
+                      <div class="summary-sheet__grid">
+                        <article class="summary-sheet__card summary-sheet__card--blue">
+                          <h3>精细化流量投放策略 <span class="minutes-card__pill">投放</span></h3>
+                          <ul class="summary-sheet__list">
+                            <li>优化渠道预算和内容排期，提升高转化流量占比。</li>
+                            <li>建立搜索词和短视频素材复盘机制，按周滚动调整。</li>
+                            <li>主动筛选优质达人与高潜商品，形成组合投放策略。</li>
+                          </ul>
+                        </article>
+                        <article class="summary-sheet__card summary-sheet__card--blue">
+                          <h3>专业化直播间转化策略 <span class="minutes-card__pill">直播</span></h3>
+                          <ul class="summary-sheet__list">
+                            <li>优化直播间场景搭建、卖点话术与互动节奏。</li>
+                            <li>加强主播话术训练，突出爆款卖点和限时权益。</li>
+                            <li>建立直播后复盘模板，持续优化转化链路。</li>
+                          </ul>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section class="minutes-section">
+                      <h3 class="minutes-section__title">后续工作安排</h3>
+                      <div class="summary-sheet__grid">
+                        <article class="summary-sheet__card summary-sheet__card--orange">
+                          <h3>各岗位专项落地执行工作 <span class="minutes-card__pill">专项落地</span></h3>
+                          <ul class="summary-sheet__list">
+                            <li>全员梳理工作清单</li>
+                            <li>运营团队完成话术落地</li>
+                            <li>各业务模块优化落地</li>
+                          </ul>
+                        </article>
+                        <article class="summary-sheet__card summary-sheet__card--red">
+                          <h3>长效复盘与动态优化工作 <span class="minutes-card__pill">动态优化</span></h3>
+                          <ul class="summary-sheet__list">
+                            <li>建立常态化复盘机制</li>
+                            <li>动态优化运营策略</li>
+                            <li>紧盯月度目标达成</li>
+                          </ul>
+                        </article>
+                      </div>
+                    </section>
+
+                    <section class="minutes-section">
+                      <h3 class="minutes-section__title">结论与后续</h3>
+                      <article class="summary-sheet__card summary-sheet__card--footer">
+                        <p>本次 3 月数据复盘会议精准定位了本月电商运营的核心优势与短板，明确了话术优化、流量投放、商品运营、直播间运营的优化方向。全体运营人员需聚焦问题、落实整改，严格执行 4 月各项运营策略，以提升流量质量、拉升转化效率、突破销量瓶颈为核心目标。</p>
+                      </article>
+                    </section>
+                  </article>
+                  </div>
+                </div>
+              </div>
+
+              <footer class="minutes-player" aria-label="会议录音播放器">
+                <div class="minutes-player__bar">
+                  <div class="minutes-player__controls">
+                    <button class="minutes-player__button" type="button" aria-label="回到上一段">↺</button>
+                    <button class="minutes-player__button" type="button" aria-label="播放">▶</button>
+                    <button class="minutes-player__button" type="button" aria-label="下一段">↻</button>
+                  </div>
+                  <div class="minutes-player__progress">
+                    <span class="minutes-player__time">00:00</span>
+                    <div class="minutes-player__track" aria-hidden="true">
+                      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <span class="minutes-player__time">39:34</span>
+                  </div>
+                  <span class="minutes-player__speed">1×</span>
+                </div>
+              </footer>
+            </div>
+          </div>
+        </section>
+
+        <section class="legacy-summary-sheet" hidden aria-hidden="true">
+          <header class="summary-sheet__header">
+            <div>
+              <p class="summary-sheet__eyebrow">MEETING SUMMARY</p>
+              <h2 class="summary-sheet__title">产品评审会议纪要已生成</h2>
+              <p class="summary-sheet__copy">
+                AI 已将录制内容整理为摘要、结论、待办与时间线。低置信度内容会保留确认入口，用户可以继续编辑、分享或同步到知识库。
+              </p>
+            </div>
+            <div class="summary-sheet__actions">
+              <button class="summary-sheet__button" type="button">编辑纪要</button>
+              <button class="summary-sheet__button summary-sheet__button--primary" type="button">分享给团队</button>
+              <button class="summary-sheet__button summary-sheet__button--reset" type="button">重新演示</button>
+            </div>
+          </header>
+
+          <div class="summary-sheet__grid">
+            <article class="summary-sheet__card">
+              <h3>会议摘要</h3>
+              <p>
+                本次评审围绕 AI 妙记在会议场景中的主动触发、录制中状态反馈和会后结构化交付展开。团队确认优先保留低打扰提示、可接管的玲珑台，以及可编辑的会后纪要。
+              </p>
+            </article>
+
+            <article class="summary-sheet__card">
+              <h3>关键结论</h3>
+              <ul class="summary-sheet__list">
+                <li><span class="summary-sheet__tag">体验</span><span>主动提示只在高置信会议场景出现</span><span class="summary-sheet__owner">Serena</span></li>
+                <li><span class="summary-sheet__tag">状态</span><span>玲珑台需要承接暂停、停止和展开详情</span><span class="summary-sheet__owner">Ray</span></li>
+                <li><span class="summary-sheet__tag">交付</span><span>纪要按摘要、结论、待办和时间线组织</span><span class="summary-sheet__owner">Aadi</span></li>
+              </ul>
+            </article>
+
+            <article class="summary-sheet__card">
+              <h3>待办事项</h3>
+              <ul class="summary-sheet__list">
+                <li><span class="summary-sheet__tag">D+1</span><span>补齐低置信度确认样式</span><span class="summary-sheet__owner">UX</span></li>
+                <li><span class="summary-sheet__tag">D+2</span><span>定义同声传译与妙记并行时的岛状态</span><span class="summary-sheet__owner">PM</span></li>
+                <li><span class="summary-sheet__tag">D+3</span><span>验证移动端后台录制权限提示</span><span class="summary-sheet__owner">RD</span></li>
+              </ul>
+            </article>
+
+            <article class="summary-sheet__card">
+              <h3>时间线</h3>
+              <div class="summary-sheet__timeline">
+                <div class="summary-sheet__time-row"><time>00:04</time><span>检测到多人会议场景，AI 主动询问是否记录。</span></div>
+                <div class="summary-sheet__time-row"><time>00:18</time><span>团队确认录制中需要显示发言人、重点和异常状态。</span></div>
+                <div class="summary-sheet__time-row"><time>00:42</time><span>会后纪要采用 GenUI 结构化输出，支持继续编辑和分享。</span></div>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="vendor/gsap.min.js"></script>
+    <script>
+      const stage = document.querySelector(".figma-stage");
+      const prompt = document.querySelector(".aui-prompt");
+      const countdown = document.querySelector(".aui-prompt__countdown");
+      const ignoreButton = document.querySelector(".aui-prompt__button--ghost");
+      const recordButton = document.querySelector(".aui-prompt__button--primary");
+      const orbVideos = document.querySelectorAll(".aui-prompt__orb, .recording-confirm__icon, .final-summary-toast__orb");
+      const recordingIsland = document.querySelector(".recording-island");
+      const recordingTimer = document.querySelector(".recording-island__timer");
+      const recordingModeName = document.querySelector(".recording-island__mode-name");
+      const pauseRecordButton = document.querySelector(".recording-island__control--pause");
+      const stopRecordButton = document.querySelector(".recording-island__control--stop");
+      const islandScreenshotButton = document.querySelector(".recording-island__control--screenshot");
+      const expandRecordButton = document.querySelector(".recording-island__control--expand");
+      const islandModeSwitchButton = document.querySelector(".recording-island__switch");
+      const islandModeSwitchIcon = document.querySelector(".recording-island__switch-icon");
+      const islandModeSwitchLabel = document.querySelector(".recording-island__switch-label");
+      const stopConfirm = document.querySelector(".recording-confirm");
+      const stopConfirmEndButton = document.querySelector(".recording-confirm__button--end");
+      const stopConfirmContinueButton = document.querySelector(".recording-confirm__button--continue");
+      const agentPanel = document.querySelector(".agent-panel");
+      const agentPanelBody = document.querySelector(".agent-panel__body");
+      const agentFeed = document.querySelector(".agent-panel__feed--summary");
+      const agentTabButtons = document.querySelectorAll("[data-agent-tab]");
+      const agentTabPanels = document.querySelectorAll("[data-agent-panel]");
+      const panelCollapseButton = document.querySelector(".agent-panel__collapse");
+      const agentPlayButton = document.querySelector(".agent-panel__control--play");
+      const agentStopButton = document.querySelector(".agent-panel__control--stop");
+      const agentScreenshotButton = document.querySelector(".agent-panel__tool");
+      const agentRuntime = document.querySelector(".agent-panel__runtime");
+      const agentWaveform = document.querySelector(".agent-waveform");
+      const agentStopLayer = document.querySelector(".agent-panel__stop-layer");
+      const agentStopLayerButtons = document.querySelectorAll("[data-agent-stop-action]");
+      const subtitlePanel = document.querySelector(".subtitle-panel");
+      const subtitlePanelText = document.querySelector(".subtitle-panel__text");
+      const subtitlePanelCloseButton = document.querySelector(".subtitle-panel__close");
+      const finalSummaryToast = document.querySelector(".final-summary-toast");
+      const finalSummaryIgnoreButton = document.querySelector(".final-summary-toast__button--ghost");
+      const finalSummaryViewButton = document.querySelector(".final-summary-toast__button--primary");
+      const typewriterTargets = document.querySelectorAll(".agent-timeline__title, .agent-timeline__text, .agent-panel__status");
+      const timelineItems = document.querySelectorAll(".agent-timeline__item");
+      const transcriptList = document.querySelector(".agent-transcript");
+      const transcriptEntries = document.querySelectorAll(".agent-transcript__entry");
+      const summarySheet = document.querySelector(".summary-sheet");
+      const minutesContent = document.querySelector(".minutes-window__content");
+      const minutesContentScroll = document.querySelector(".minutes-content-scroll");
+      const minutesRichEditButton = document.querySelector(".minutes-rich__hover-edit");
+      const actionSummaryCard = document.querySelector(".summary-sheet__card--footer");
+      const resetDemoButton = document.querySelector(".summary-sheet__button--reset");
+      const transcriptItems = document.querySelectorAll(".agent-timeline__item, .agent-panel__status, .agent-panel__footer");
+      const summaryCards = document.querySelectorAll(".summary-sheet__card");
+      const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const promptEntryDelay = 1000;
+      const promptEntryDuration = 350;
+      const countdownStart = reduceMotion ? 200 : promptEntryDelay + promptEntryDuration;
+      let promptCountdownTimer;
+      let recordingTimerId;
+      let recordingSeconds = 0;
+      let isRecordingPaused = false;
+      let hasStartedRecording = false;
+      let typewriterRunId = 0;
+      let activeSummaryIndex = 0;
+      let isSummaryTyping = false;
+      let transcriptRunId = 0;
+      let wasPausedBeforeAgentStopConfirm = false;
+      let islandMode = "ai";
+      let subtitleRunId = 0;
+      let subtitleTypingTimerId;
+      let subtitleSampleIndex = 0;
+      let wasToolbarBeforeStopConfirm = false;
+      let modeBeforeStopConfirm = "ai";
+      let finalSummaryTimerId;
+      let finalSummaryCountdownTimerId;
+      const subtitleSamples = [
+        "我倾向于让 AI 妙记在明确会议场景里主动提示，比如多人通话、共享屏幕或连续语音超过一段时间。但提示前要结合日程、参会人数和用户历史偏好，避免误打扰。",
+        "会议记录沉淀到知识库以后，不能只停留在会后查看。后续用户追问结论、查找历史讨论，或者需要应答锦囊时，都应该能复用这次会议里已经确认过的信息。",
+        "实时转录本身不是最终价值，关键是会中状态反馈、议题识别和会后结构化小结。低置信度场景下仍然保留确认弹窗，让用户决定是否继续生成总结。"
+      ];
+
+      function fitStage() {
+        const scale = Math.min(window.innerWidth / 1600, window.innerHeight / 1000);
+        stage.style.setProperty("--stage-scale", String(scale));
+      }
+
+      function dismissPrompt() {
+        window.clearInterval(promptCountdownTimer);
+        prompt.classList.add("aui-prompt--dismissed");
+      }
+
+      function formatRecordingTime(totalSeconds) {
+        const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+        const seconds = String(totalSeconds % 60).padStart(2, "0");
+        return `${minutes}:${seconds}`;
+      }
+
+      function renderTimelineTimes() {
+        timelineItems.forEach((item) => {
+          const time = item.querySelector(".agent-timeline__time");
+          const offset = Number(item.dataset.meetingTime || 0);
+
+          if (time) time.textContent = formatRecordingTime(offset);
+        });
+      }
+
+      function resetSummaryTimeline() {
+        activeSummaryIndex = 0;
+        isSummaryTyping = false;
+
+        timelineItems.forEach((item, index) => {
+          item.classList.remove("agent-timeline__item--generating", "agent-timeline__item--pending");
+          item.classList.toggle("agent-timeline__item--hidden", index !== 0);
+        });
+      }
+
+      function renderRecordingTime() {
+        const formattedTime = formatRecordingTime(recordingSeconds);
+        recordingTimer.textContent = formattedTime;
+        agentRuntime.textContent = formattedTime;
+      }
+
+      function updateSubtitlePanelText() {
+        if (!subtitlePanelText) return;
+
+        const sampleIndex = Math.min(subtitleSamples.length - 1, Math.floor(recordingSeconds / 45));
+        subtitlePanelText.textContent = subtitleSamples[sampleIndex];
+      }
+
+      function stopSubtitleTyping() {
+        subtitleRunId += 1;
+        window.clearTimeout(subtitleTypingTimerId);
+        if (subtitlePanelText) subtitlePanelText.classList.remove("is-typing");
+      }
+
+      function startSubtitleTyping({ restart = false } = {}) {
+        if (!subtitlePanel || !subtitlePanelText || !subtitlePanel.classList.contains("subtitle-panel--visible")) return;
+
+        stopSubtitleTyping();
+        const runId = subtitleRunId;
+        if (restart) {
+          subtitleSampleIndex = Math.min(subtitleSamples.length - 1, Math.floor(recordingSeconds / 45));
+        }
+
+        function typeCurrentSample() {
+          if (runId !== subtitleRunId || !subtitlePanel.classList.contains("subtitle-panel--visible")) return;
+
+          const text = subtitleSamples[subtitleSampleIndex % subtitleSamples.length] || "";
+          let index = 0;
+          subtitlePanelText.textContent = "";
+          subtitlePanelText.classList.add("is-typing");
+
+          function tick() {
+            if (runId !== subtitleRunId || !subtitlePanel.classList.contains("subtitle-panel--visible")) return;
+
+            if (isRecordingPaused || !hasStartedRecording) {
+              subtitleTypingTimerId = window.setTimeout(tick, 90);
+              return;
+            }
+
+            index = Math.min(text.length, index + 1);
+            subtitlePanelText.textContent = text.slice(0, index);
+
+            if (index < text.length) {
+              subtitleTypingTimerId = window.setTimeout(tick, 42);
+              return;
+            }
+
+            subtitlePanelText.classList.remove("is-typing");
+            subtitleTypingTimerId = window.setTimeout(() => {
+              subtitleSampleIndex = (subtitleSampleIndex + 1) % subtitleSamples.length;
+              typeCurrentSample();
+            }, 1400);
+          }
+
+          tick();
+        }
+
+        typeCurrentSample();
+      }
+
+      function setIslandMode(mode) {
+        islandMode = mode === "subtitle" ? "subtitle" : "ai";
+        const isSubtitleMode = islandMode === "subtitle";
+
+        recordingIsland.classList.toggle("recording-island--subtitle", isSubtitleMode);
+        recordingIsland.classList.toggle("recording-island--ai", !isSubtitleMode);
+        if (recordingModeName) recordingModeName.textContent = isSubtitleMode ? "同传字幕" : "会议记录";
+
+        if (islandModeSwitchIcon) {
+          islandModeSwitchIcon.classList.toggle("recording-island__switch-icon--cc", !isSubtitleMode);
+          islandModeSwitchIcon.classList.toggle("recording-island__switch-icon--ai", isSubtitleMode);
+        }
+
+        if (islandModeSwitchButton) {
+          islandModeSwitchButton.setAttribute("aria-label", isSubtitleMode ? "切换到 AI 妙记" : "切换到同传字幕");
+        }
+
+        if (islandModeSwitchLabel) {
+          islandModeSwitchLabel.textContent = isSubtitleMode ? "AI 妙记" : "同传字幕";
+        }
+      }
+
+      function showIslandToolbar(mode = islandMode) {
+        if (!hasStartedRecording) return;
+
+        setIslandMode(mode);
+        hideSubtitlePanel();
+        recordingIsland.classList.remove("recording-island--expanded", "recording-island--confirm", "recording-island--stopped");
+        recordingIsland.classList.add("recording-island--visible", "recording-island--toolbar");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        notifyParentStep(4);
+      }
+
+      function resetIslandToolbarMode() {
+        setIslandMode("ai");
+        recordingIsland.classList.remove("recording-island--toolbar", "recording-island--subtitle", "recording-island--ai");
+      }
+
+      function animateSubtitlePanelIn() {
+        if (!subtitlePanel) return;
+
+        stopSubtitleTyping();
+        if (subtitlePanelText) {
+          subtitlePanelText.textContent = "";
+          subtitlePanelText.classList.remove("is-typing");
+        }
+
+        subtitlePanel.classList.add("subtitle-panel--visible");
+        subtitlePanel.setAttribute("aria-hidden", "false");
+
+        if (reduceMotion) {
+          updateSubtitlePanelText();
+        } else {
+          startSubtitleTyping({ restart: true });
+        }
+
+        if (!window.gsap || reduceMotion) return;
+
+        gsap.fromTo(
+          subtitlePanel,
+          { autoAlpha: 0, y: 22, scale: 0.98 },
+          { autoAlpha: 1, y: 0, scale: 1, duration: 0.34, ease: "power3.out", overwrite: "auto" }
+        );
+        gsap.fromTo(
+          ".subtitle-panel__brand, .subtitle-panel__chip, .subtitle-panel__icon-button, .subtitle-panel__text",
+          { autoAlpha: 0, y: 8 },
+          { autoAlpha: 1, y: 0, duration: 0.26, ease: "power2.out", stagger: 0.035, delay: 0.08, overwrite: "auto" }
+        );
+      }
+
+      function hideSubtitlePanel({ restoreToolbar = false } = {}) {
+        if (!subtitlePanel) return;
+
+        const finish = () => {
+          stopSubtitleTyping();
+          subtitlePanel.classList.remove("subtitle-panel--visible");
+          subtitlePanel.setAttribute("aria-hidden", "true");
+          if (restoreToolbar && hasStartedRecording) showIslandToolbar("subtitle");
+        };
+
+        if (!subtitlePanel.classList.contains("subtitle-panel--visible") || !window.gsap || reduceMotion) {
+          finish();
+          return;
+        }
+
+        gsap.to(subtitlePanel, {
+          autoAlpha: 0,
+          y: 18,
+          scale: 0.98,
+          duration: 0.2,
+          ease: "power2.in",
+          overwrite: "auto",
+          onComplete: finish
+        });
+      }
+
+      function showSubtitlePanel() {
+        if (!hasStartedRecording) return;
+
+        setIslandMode("subtitle");
+        recordingIsland.classList.remove("recording-island--visible", "recording-island--toolbar", "recording-island--expanded", "recording-island--confirm");
+        expandRecordButton.setAttribute("aria-expanded", "true");
+        animatePanelOut(agentPanel);
+        animateSubtitlePanelIn();
+        notifyParentStep(4);
+      }
+
+      function resetTranscriptEntries({ clearScreenshots = true } = {}) {
+        transcriptRunId += 1;
+        if (clearScreenshots) {
+          transcriptList.querySelectorAll(".agent-transcript__entry--screenshot").forEach((entry) => entry.remove());
+        }
+        transcriptEntries.forEach((entry) => {
+          const bubble = entry.querySelector(".agent-transcript__bubble");
+
+          if (!bubble.dataset.fullText) bubble.dataset.fullText = bubble.textContent.trim();
+          bubble.textContent = "";
+          entry.dataset.started = "false";
+          entry.onTranscriptComplete = null;
+          entry.classList.add("agent-transcript__entry--pending");
+          entry.classList.remove("agent-transcript__entry--typing");
+        });
+      }
+
+      function followTranscriptGeneration(entry) {
+        return;
+      }
+
+      function typeTranscriptEntry(entry, runId) {
+        const bubble = entry.querySelector(".agent-transcript__bubble");
+        const text = bubble.dataset.fullText || "";
+        let index = bubble.textContent.length;
+        const stepSize = 1;
+        const speed = 135;
+
+        entry.classList.remove("agent-transcript__entry--pending");
+        entry.classList.add("agent-transcript__entry--typing");
+
+        function tick() {
+          if (runId !== transcriptRunId) return;
+
+          if (isRecordingPaused || !hasStartedRecording) {
+            window.setTimeout(tick, speed);
+            return;
+          }
+
+          index = Math.min(text.length, index + stepSize);
+          bubble.textContent = text.slice(0, index);
+          followTranscriptGeneration(entry);
+
+          if (index < text.length) {
+            window.setTimeout(tick, speed);
+          } else {
+            entry.classList.remove("agent-transcript__entry--typing");
+            if (typeof entry.onTranscriptComplete === "function") entry.onTranscriptComplete();
+          }
+        }
+
+        tick();
+      }
+
+      function startTranscriptGeneration() {
+        const runId = transcriptRunId;
+        let entryIndex = 0;
+
+        function typeNextTranscriptEntry() {
+          if (runId !== transcriptRunId) return;
+
+          if (isRecordingPaused || !hasStartedRecording) {
+            window.setTimeout(typeNextTranscriptEntry, 135);
+            return;
+          }
+
+          const entry = transcriptEntries[entryIndex];
+          if (!entry) return;
+
+          entry.dataset.started = "true";
+          entry.onTranscriptComplete = () => {
+            entry.onTranscriptComplete = null;
+            entryIndex += 1;
+            window.setTimeout(typeNextTranscriptEntry, 220);
+          };
+          typeTranscriptEntry(entry, runId);
+        }
+
+        window.setTimeout(typeNextTranscriptEntry, 180);
+      }
+
+      function addScreenshotTranscriptEntry({ revealPanel = true } = {}) {
+        if (!hasStartedRecording) return;
+
+        const snapshotTime = formatRecordingTime(recordingSeconds);
+        const entry = document.createElement("article");
+        entry.className = "agent-transcript__entry agent-transcript__entry--screenshot";
+        entry.dataset.started = "true";
+        entry.innerHTML = `
+          <div class="agent-transcript__speaker">
+            <span class="agent-transcript__avatar agent-transcript__avatar--image" aria-hidden="true"></span>
+            <span class="agent-transcript__meta">图片截取时间&nbsp;&nbsp;${snapshotTime}</span>
+          </div>
+          <img class="agent-transcript__screenshot-image" src="assets/ai-miaoji/transcript-screenshot-table@3x.png" alt="实时截图记录" draggable="false" />
+        `;
+
+        const visibleEntries = Array.from(
+          transcriptList.querySelectorAll(".agent-transcript__entry:not(.agent-transcript__entry--pending)")
+        );
+        const lastVisibleEntry = visibleEntries.at(-1);
+
+        if (lastVisibleEntry) {
+          lastVisibleEntry.insertAdjacentElement("afterend", entry);
+        } else {
+          transcriptList.prepend(entry);
+        }
+
+        switchAgentTab("transcript");
+        if (revealPanel) {
+          window.requestAnimationFrame(() => {
+            entry.scrollIntoView({ block: "center", behavior: reduceMotion ? "auto" : "smooth" });
+          });
+        }
+      }
+
+
+      function setRecordingPaused(paused) {
+        isRecordingPaused = paused;
+        pauseRecordButton.classList.toggle("is-paused", isRecordingPaused);
+        pauseRecordButton.setAttribute("aria-label", isRecordingPaused ? "\u7ee7\u7eed\u8bb0\u5f55" : "\u6682\u505c\u8bb0\u5f55");
+        pauseRecordButton.setAttribute("aria-pressed", String(isRecordingPaused));
+        agentPlayButton.classList.toggle("is-playing", hasStartedRecording && !isRecordingPaused);
+        agentPlayButton.setAttribute("aria-label", isRecordingPaused ? "\u7ee7\u7eed\u64ad\u653e" : "\u6682\u505c\u64ad\u653e");
+        agentPlayButton.setAttribute("aria-pressed", String(!isRecordingPaused));
+        agentWaveform.classList.toggle("agent-waveform--paused", isRecordingPaused || !hasStartedRecording);
+      }
+
+      function startRecordingTimer() {
+        window.clearInterval(recordingTimerId);
+        recordingSeconds = 0;
+        setRecordingPaused(false);
+        renderRecordingTime();
+        renderTimelineTimes();
+        resetSummaryTimeline();
+        resetTranscriptEntries();
+        recordingTimerId = window.setInterval(() => {
+          if (!isRecordingPaused) {
+            recordingSeconds += 1;
+            renderRecordingTime();
+          }
+        }, 1000);
+      }
+
+      function followAgentGeneration(element) {
+        return;
+      }
+
+      function syncTimelineProgress(element) {
+        const item = element.closest(".agent-timeline__item");
+
+        timelineItems.forEach((timelineItem) => timelineItem.classList.remove("agent-timeline__item--generating"));
+
+        if (!item) {
+          followAgentGeneration(element);
+          return;
+        }
+
+        item.classList.remove("agent-timeline__item--pending");
+        item.classList.add("agent-timeline__item--generating");
+        followAgentGeneration(item);
+      }
+
+      function switchAgentTab(tabName) {
+        agentTabButtons.forEach((button) => {
+          const isActive = button.dataset.agentTab === tabName;
+          button.classList.toggle("agent-tabs__tab--active", isActive);
+          button.setAttribute("aria-selected", String(isActive));
+        });
+
+        agentTabPanels.forEach((panel) => {
+          const isActive = panel.dataset.agentPanel === tabName;
+          panel.classList.toggle("agent-panel__feed--hidden", !isActive);
+          panel.setAttribute("aria-hidden", String(!isActive));
+        });
+
+        if (tabName === "transcript") {
+          const latestVisibleEntry = Array.from(transcriptEntries).filter((entry) => entry.dataset.started === "true").at(-1);
+          if (latestVisibleEntry) followTranscriptGeneration(latestVisibleEntry);
+        }
+      }
+
+      function getActiveAgentFeed() {
+        return Array.from(agentTabPanels).find((panel) => !panel.classList.contains("agent-panel__feed--hidden"));
+      }
+
+      function handleAgentFeedWheel(event) {
+        if (event.target.closest(".agent-tabs")) return;
+
+        const feed = getActiveAgentFeed();
+        if (!feed) return;
+
+        const maxScroll = feed.scrollHeight - feed.clientHeight;
+        if (maxScroll <= 0) return;
+
+        const lineHeight = 24;
+        const pageHeight = feed.clientHeight;
+        const deltaY =
+          event.deltaMode === WheelEvent.DOM_DELTA_LINE
+            ? event.deltaY * lineHeight
+            : event.deltaMode === WheelEvent.DOM_DELTA_PAGE
+              ? event.deltaY * pageHeight
+              : event.deltaY;
+        const nextScrollTop = Math.max(0, Math.min(maxScroll, feed.scrollTop + deltaY));
+
+        if (nextScrollTop !== feed.scrollTop) {
+          event.preventDefault();
+          feed.scrollTop = nextScrollTop;
+        }
+      }
+
+      function typeTextElement(element, text, runId, onComplete) {
+        let index = 0;
+        const isTitle = element.classList.contains("agent-timeline__title");
+        const stepSize = isTitle ? 1 : 2;
+        const speed = isTitle ? 32 : 18;
+        let hasSyncedTimeline = false;
+
+        element.classList.remove("is-pending");
+        element.classList.add("is-typing");
+
+        function tick() {
+          if (runId !== typewriterRunId) return;
+
+          if (!hasSyncedTimeline) {
+            syncTimelineProgress(element);
+            hasSyncedTimeline = true;
+          }
+
+          index = Math.min(text.length, index + stepSize);
+          element.textContent = text.slice(0, index);
+          followAgentGeneration(element);
+
+          if (index < text.length) {
+            window.setTimeout(tick, speed);
+          } else {
+            element.classList.remove("is-typing");
+            if (typeof onComplete === "function") onComplete();
+          }
+        }
+
+        tick();
+      }
+
+      function typeSummaryItem(item, runId, onComplete) {
+        const targets = Array.from(item.querySelectorAll(".agent-timeline__title, .agent-timeline__text"));
+        let targetIndex = 0;
+
+        item.classList.remove("agent-timeline__item--hidden", "agent-timeline__item--pending");
+
+        function typeNextSummaryTarget() {
+          if (runId !== typewriterRunId) return;
+
+          const element = targets[targetIndex];
+          if (!element) {
+            item.classList.remove("agent-timeline__item--generating");
+            if (typeof onComplete === "function") onComplete();
+            return;
+          }
+
+          const text = element.dataset.fullText || "";
+          typeTextElement(element, text, runId, () => {
+            targetIndex += 1;
+            typeNextSummaryTarget();
+          });
+        }
+
+        typeNextSummaryTarget();
+      }
+
+      function startSummaryGeneration() {
+        if (isSummaryTyping || activeSummaryIndex >= timelineItems.length) return;
+
+        const item = timelineItems[activeSummaryIndex];
+        isSummaryTyping = true;
+        item.classList.remove("agent-timeline__item--hidden");
+
+        if (activeSummaryIndex === 0) {
+          item.classList.remove("agent-timeline__item--generating");
+          activeSummaryIndex += 1;
+          isSummaryTyping = false;
+          window.setTimeout(startSummaryGeneration, 240);
+          return;
+        }
+
+        typeSummaryItem(item, typewriterRunId, () => {
+          activeSummaryIndex += 1;
+          isSummaryTyping = false;
+          window.setTimeout(startSummaryGeneration, 260);
+        });
+      }
+
+      function revealAgentPanelText() {
+        typewriterRunId += 1;
+        const runId = typewriterRunId;
+
+        if (agentFeed) agentFeed.scrollTop = 0;
+        renderTimelineTimes();
+        resetSummaryTimeline();
+        resetTranscriptEntries({ clearScreenshots: false });
+
+        typewriterTargets.forEach((element) => {
+          if (!element.dataset.fullText) element.dataset.fullText = element.textContent;
+          element.classList.add("agent-typewriter");
+          element.classList.remove("is-typing");
+          element.classList.toggle("is-pending", false);
+          const timelineItem = element.closest(".agent-timeline__item");
+          const shouldShowImmediately = !timelineItem || timelineItem.dataset.meetingTime === "0" || reduceMotion;
+          element.textContent = shouldShowImmediately ? element.dataset.fullText : "";
+        });
+
+        if (reduceMotion) {
+          timelineItems.forEach((item) => item.classList.remove("agent-timeline__item--hidden"));
+          transcriptEntries.forEach((entry) => {
+            const bubble = entry.querySelector(".agent-transcript__bubble");
+            entry.dataset.started = "true";
+            entry.classList.remove("agent-transcript__entry--pending", "agent-transcript__entry--typing");
+            bubble.textContent = bubble.dataset.fullText || "";
+          });
+          return;
+        }
+
+        startSummaryGeneration();
+        startTranscriptGeneration();
+      }
+
+      function animatePanelIn(panel, items = []) {
+        panel.classList.add(`${panel.classList[0]}--visible`);
+        if (panel === agentPanel) revealAgentPanelText();
+
+        if (!window.gsap || reduceMotion) return;
+
+        gsap.fromTo(
+          panel,
+          { autoAlpha: 0, y: panel === summarySheet ? 28 : 0, x: panel === agentPanel ? 28 : 0, scale: 0.965 },
+          { autoAlpha: 1, y: 0, x: 0, scale: 1, duration: 0.46, ease: "power3.out", overwrite: "auto" }
+        );
+
+        if (items.length) {
+          gsap.fromTo(
+            items,
+            { autoAlpha: 0, y: 12 },
+            { autoAlpha: 1, y: 0, duration: 0.34, ease: "power2.out", stagger: 0.05, delay: 0.12, overwrite: "auto" }
+          );
+        }
+      }
+
+      function animatePanelOut(panel) {
+        const visibleClass = `${panel.classList[0]}--visible`;
+
+        if (!window.gsap || reduceMotion) {
+          panel.classList.remove(visibleClass);
+          return;
+        }
+
+        gsap.to(panel, {
+          autoAlpha: 0,
+          y: panel === summarySheet ? 22 : 0,
+          x: panel === agentPanel ? 22 : 0,
+          scale: 0.97,
+          duration: 0.24,
+          ease: "power2.in",
+          overwrite: "auto",
+          onComplete: () => panel.classList.remove(visibleClass)
+        });
+      }
+
+      function setMinutesRichEditing(isEditing) {
+        if (!summarySheet) return;
+
+        summarySheet.classList.toggle("summary-sheet--rich-editing", isEditing);
+        summarySheet.setAttribute("data-minutes-view", isEditing ? "rich-edit" : "summary");
+
+        window.requestAnimationFrame(() => {
+          if (minutesContentScroll) {
+            minutesContentScroll.scrollTop = 0;
+          }
+        });
+      }
+
+      function openMinutesRichEditing() {
+        setMinutesRichEditing(true);
+
+        // The rich editor is the final hand-off in the story.  Let the parent
+        // page know about a click inside the iframe so its surrounding copy
+        // and step pill remain in sync with the live demo.
+        notifyParentStep(3);
+
+        if (window.gsap && !reduceMotion) {
+          gsap.fromTo(
+            ".minutes-rich-actions, .minutes-rich--figma",
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.26, ease: "power2.out", stagger: 0.04, overwrite: "auto" }
+          );
+        }
+      }
+
+      function showRecordingIsland() {
+        hasStartedRecording = true;
+        hideFinalSummaryToast();
+        hideSubtitlePanel();
+        dismissPrompt();
+        setMinutesRichEditing(false);
+        animatePanelOut(summarySheet);
+        resetIslandToolbarMode();
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        recordingIsland.classList.remove("recording-island--stopped", "recording-island--confirm");
+        stopConfirm.setAttribute("aria-hidden", "true");
+
+        window.setTimeout(() => {
+          recordingIsland.classList.add("recording-island--visible");
+          startRecordingTimer();
+        }, 260);
+      }
+
+      function showStopConfirmation() {
+        if (!hasStartedRecording) return;
+
+        wasToolbarBeforeStopConfirm = recordingIsland.classList.contains("recording-island--toolbar");
+        modeBeforeStopConfirm = islandMode;
+        hideSubtitlePanel();
+        recordingIsland.classList.remove("recording-island--expanded");
+        recordingIsland.classList.remove("recording-island--toolbar", "recording-island--subtitle", "recording-island--ai");
+        recordingIsland.classList.add("recording-island--confirm");
+        stopConfirm.setAttribute("aria-hidden", "false");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        animatePanelOut(agentPanel);
+
+        if (window.gsap && !reduceMotion) {
+          gsap.fromTo(
+            ".recording-confirm__title, .recording-confirm__actions",
+            { autoAlpha: 0, y: -4 },
+            { autoAlpha: 1, y: 0, duration: 0.24, ease: "power2.out", stagger: 0.04, overwrite: "auto" }
+          );
+        }
+      }
+
+      function cancelStopConfirmation() {
+        if (!hasStartedRecording) return;
+
+        recordingIsland.classList.remove("recording-island--confirm");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        if (wasToolbarBeforeStopConfirm) {
+          showIslandToolbar(modeBeforeStopConfirm);
+        }
+      }
+
+      function animateAgentStopLayerContent() {
+        if (!window.gsap || reduceMotion || !agentStopLayer) return;
+
+        const visibleView = agentStopLayer.querySelector(
+          `.agent-panel__stop-view--${agentStopLayer.dataset.agentStopState}`
+        );
+        if (!visibleView) return;
+
+        gsap.fromTo(
+          visibleView.querySelectorAll(".agent-panel__stop-icon, .agent-panel__stop-title, .agent-panel__stop-copy, .agent-panel__stop-button"),
+          { autoAlpha: 0, y: 8 },
+          { autoAlpha: 1, y: 0, duration: 0.26, ease: "power2.out", stagger: 0.045, overwrite: "auto" }
+        );
+      }
+
+      function showAgentStopConfirmation() {
+        if (!hasStartedRecording || !agentStopLayer) return;
+
+        wasPausedBeforeAgentStopConfirm = isRecordingPaused;
+        setRecordingPaused(true);
+        agentStopLayer.dataset.agentStopState = "confirm";
+        agentStopLayer.classList.add("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "false");
+        animateAgentStopLayerContent();
+      }
+
+      function hideAgentStopConfirmation() {
+        if (!agentStopLayer) return;
+
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+
+        if (hasStartedRecording && !wasPausedBeforeAgentStopConfirm) {
+          setRecordingPaused(false);
+        }
+      }
+
+      function showAgentSummaryGenerating() {
+        if (!agentStopLayer) return;
+
+        window.clearInterval(recordingTimerId);
+        hasStartedRecording = false;
+        setRecordingPaused(false);
+        hideSubtitlePanel();
+        recordingIsland.classList.remove("recording-island--expanded", "recording-island--confirm");
+        recordingIsland.classList.remove("recording-island--toolbar", "recording-island--subtitle", "recording-island--ai");
+        recordingIsland.classList.add("recording-island--stopped");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        stopConfirm.setAttribute("aria-hidden", "true");
+
+        agentStopLayer.dataset.agentStopState = "generating";
+        agentStopLayer.classList.add("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "false");
+        animateAgentStopLayerContent();
+      }
+
+      function closeAgentGeneratingNotice() {
+        if (!agentStopLayer) return;
+
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        scheduleFinalSummaryToast();
+      }
+
+      function handleAgentStopLayerAction(action) {
+        if (action === "finish") {
+          showAgentSummaryGenerating();
+          return;
+        }
+
+        if (action === "continue") {
+          hideAgentStopConfirmation();
+          return;
+        }
+
+        if (agentStopLayer?.dataset.agentStopState === "generating") {
+          closeAgentGeneratingNotice();
+          return;
+        }
+
+        hideAgentStopConfirmation();
+      }
+
+      function hideFinalSummaryToast() {
+        window.clearTimeout(finalSummaryTimerId);
+        window.clearInterval(finalSummaryCountdownTimerId);
+        if (finalSummaryIgnoreButton) {
+          finalSummaryIgnoreButton.textContent = "忽略（8s）";
+        }
+        finalSummaryToast.classList.remove("final-summary-toast--visible");
+        finalSummaryToast.setAttribute("aria-hidden", "true");
+      }
+
+      function startFinalSummaryCountdown() {
+        window.clearInterval(finalSummaryCountdownTimerId);
+
+        let secondsLeft = 8;
+        const renderCountdown = () => {
+          if (finalSummaryIgnoreButton) {
+            finalSummaryIgnoreButton.textContent = `忽略（${secondsLeft}s）`;
+          }
+        };
+
+        renderCountdown();
+        finalSummaryCountdownTimerId = window.setInterval(() => {
+          secondsLeft -= 1;
+          renderCountdown();
+
+          if (secondsLeft <= 0) {
+            hideFinalSummaryToast();
+          }
+        }, 1000);
+      }
+
+      function showFinalSummaryToast() {
+        finalSummaryToast.classList.add("final-summary-toast--visible");
+        finalSummaryToast.setAttribute("aria-hidden", "false");
+        startFinalSummaryCountdown();
+
+        if (window.gsap && !reduceMotion) {
+          gsap.fromTo(
+            ".final-summary-toast__title, .final-summary-toast__card, .final-summary-toast__actions",
+            { autoAlpha: 0, y: 8 },
+            { autoAlpha: 1, y: 0, duration: 0.3, ease: "power2.out", stagger: 0.05, overwrite: "auto" }
+          );
+        }
+      }
+
+      function scheduleFinalSummaryToast() {
+        window.clearTimeout(finalSummaryTimerId);
+        window.clearInterval(recordingTimerId);
+        hasStartedRecording = false;
+        setRecordingPaused(false);
+        setMinutesRichEditing(false);
+        prompt.classList.add("aui-prompt--dismissed");
+        hideSubtitlePanel();
+        resetIslandToolbarMode();
+        recordingIsland.classList.remove("recording-island--visible", "recording-island--expanded", "recording-island--confirm");
+        recordingIsland.classList.add("recording-island--stopped");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        animatePanelOut(agentPanel);
+        animatePanelOut(summarySheet);
+
+        if (agentStopLayer) {
+          agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+          agentStopLayer.setAttribute("aria-hidden", "true");
+        }
+
+        finalSummaryTimerId = window.setTimeout(showFinalSummaryToast, 1000);
+      }
+
+      function stopRecording() {
+        if (!hasStartedRecording) return;
+
+        scheduleFinalSummaryToast();
+      }
+
+      function toggleRecordingPause() {
+        if (!hasStartedRecording) return;
+        if (recordingIsland.classList.contains("recording-island--confirm")) return;
+        if (agentStopLayer.classList.contains("agent-panel__stop-layer--visible")) return;
+
+        setRecordingPaused(!isRecordingPaused);
+      }
+
+      function toggleRecordingExpand() {
+        if (recordingIsland.classList.contains("recording-island--confirm")) return;
+
+        if (islandMode === "subtitle") {
+          showSubtitlePanel();
+          return;
+        }
+
+        const expanded = recordingIsland.classList.toggle("recording-island--expanded");
+        expandRecordButton.setAttribute("aria-expanded", String(expanded));
+
+        if (expanded) {
+          recordingIsland.classList.remove("recording-island--toolbar");
+          hideSubtitlePanel();
+          animatePanelIn(agentPanel, transcriptItems);
+        } else {
+          animatePanelOut(agentPanel);
+        }
+      }
+
+      function closeAgentPanel() {
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        showIslandToolbar("ai");
+        animatePanelOut(agentPanel);
+      }
+
+      function toggleIslandMode() {
+        if (!hasStartedRecording || recordingIsland.classList.contains("recording-island--confirm")) return;
+
+        const nextMode = islandMode === "subtitle" ? "ai" : "subtitle";
+        showIslandToolbar(nextMode);
+        animatePanelOut(agentPanel);
+      }
+
+      function resetDemo() {
+        window.clearTimeout(finalSummaryTimerId);
+        hideFinalSummaryToast();
+        hideSubtitlePanel();
+        setMinutesRichEditing(false);
+        stage.classList.remove("figma-stage--minutes-open");
+        animatePanelOut(summarySheet);
+        animatePanelOut(agentPanel);
+        resetIslandToolbarMode();
+        recordingIsland.classList.remove(
+          "recording-island--visible",
+          "recording-island--expanded",
+          "recording-island--confirm",
+          "recording-island--stopped"
+        );
+        stopConfirm.setAttribute("aria-hidden", "true");
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        prompt.classList.remove("aui-prompt--dismissed");
+        prompt.style.opacity = "";
+        prompt.style.transform = "";
+        prompt.style.visibility = "";
+        hasStartedRecording = false;
+        startRecordingTimer();
+        window.clearInterval(recordingTimerId);
+        window.setTimeout(runPromptCountdown, 160);
+      }
+
+      function runPromptCountdown() {
+        window.clearInterval(promptCountdownTimer);
+        let seconds = 8;
+
+        function renderCountdown() {
+          countdown.textContent = `${seconds}s`;
+        }
+
+        renderCountdown();
+        promptCountdownTimer = window.setInterval(() => {
+          seconds -= 1;
+          renderCountdown();
+
+          if (seconds <= 0) {
+            window.clearInterval(promptCountdownTimer);
+            window.setTimeout(() => {
+              if (!hasStartedRecording) dismissPrompt();
+            }, 180);
+          }
+        }, 1000);
+      }
+
+      function notifyParentStep(step) {
+        if (window.parent === window) return;
+        window.parent.postMessage({ type: "ai-miaoji-demo-step", step }, "*");
+      }
+
+      function showEmbeddedTaskHubState() {
+        window.clearTimeout(finalSummaryTimerId);
+        hideFinalSummaryToast();
+        hideSubtitlePanel();
+        dismissPrompt();
+        setMinutesRichEditing(false);
+        stage.classList.remove("figma-stage--minutes-open");
+        animatePanelOut(summarySheet);
+        animatePanelOut(agentPanel);
+        resetIslandToolbarMode();
+        recordingIsland.classList.remove("recording-island--stopped", "recording-island--expanded", "recording-island--confirm");
+        recordingIsland.classList.add("recording-island--visible");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        hasStartedRecording = true;
+        startRecordingTimer();
+        recordingSeconds = 3;
+        renderRecordingTime();
+        showIslandToolbar("ai");
+      }
+
+      function showEmbeddedRecordingState() {
+        window.clearTimeout(finalSummaryTimerId);
+        hideFinalSummaryToast();
+        hideSubtitlePanel();
+        dismissPrompt();
+        setMinutesRichEditing(false);
+        stage.classList.remove("figma-stage--minutes-open");
+        animatePanelOut(summarySheet);
+        resetIslandToolbarMode();
+        recordingIsland.classList.remove("recording-island--stopped", "recording-island--confirm");
+        recordingIsland.classList.add("recording-island--visible", "recording-island--expanded");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        expandRecordButton.setAttribute("aria-expanded", "true");
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        hasStartedRecording = true;
+        startRecordingTimer();
+        switchAgentTab("summary");
+        animatePanelIn(agentPanel, transcriptItems);
+      }
+
+      function showEmbeddedMinutesState(scrollToActions = false) {
+        window.clearTimeout(finalSummaryTimerId);
+        window.clearInterval(recordingTimerId);
+        hideFinalSummaryToast();
+        hideSubtitlePanel();
+        dismissPrompt();
+        setMinutesRichEditing(false);
+        hasStartedRecording = false;
+        setRecordingPaused(false);
+        resetIslandToolbarMode();
+        recordingIsland.classList.remove("recording-island--visible", "recording-island--expanded", "recording-island--confirm");
+        recordingIsland.classList.add("recording-island--stopped");
+        expandRecordButton.setAttribute("aria-expanded", "false");
+        stopConfirm.setAttribute("aria-hidden", "true");
+        agentStopLayer.classList.remove("agent-panel__stop-layer--visible");
+        agentStopLayer.setAttribute("aria-hidden", "true");
+        animatePanelOut(agentPanel);
+        stage.classList.add("figma-stage--minutes-open");
+        animatePanelIn(summarySheet, summaryCards);
+
+        window.setTimeout(() => {
+          if (!minutesContent) return;
+          if (scrollToActions && actionSummaryCard) {
+            const cardTop = actionSummaryCard.getBoundingClientRect().top - minutesContent.getBoundingClientRect().top + minutesContent.scrollTop;
+            minutesContent.scrollTop = Math.max(0, cardTop - 120);
+          } else {
+            minutesContent.scrollTop = 0;
+          }
+        }, 60);
+      }
+
+      function goToEmbeddedStep(step) {
+        const activeStep = Math.max(0, Math.min(4, Number(step) || 0));
+
+        if (activeStep === 0) {
+          resetDemo();
+        } else if (activeStep === 1) {
+          resetDemo();
+          showEmbeddedRecordingState();
+        } else if (activeStep === 2) {
+          resetDemo();
+          showEmbeddedMinutesState(false);
+        } else if (activeStep === 3) {
+          resetDemo();
+          showEmbeddedMinutesState(false);
+          openMinutesRichEditing();
+        } else {
+          resetDemo();
+          showEmbeddedTaskHubState();
+        }
+
+        notifyParentStep(activeStep);
+      }
+
+      window.aiMiaojiDemo = {
+        goToStep: goToEmbeddedStep,
+      };
+
+      window.addEventListener("message", (event) => {
+        if (event.data?.type !== "ai-miaoji-parent-step") return;
+        goToEmbeddedStep(event.data.step);
+      });
+
+      agentWaveform.querySelectorAll("span").forEach((bar, index) => {
+        bar.style.setProperty("--wave-index", index);
+      });
+      agentWaveform.classList.add("agent-waveform--paused");
+      renderRecordingTime();
+      renderTimelineTimes();
+      resetSummaryTimeline();
+      resetTranscriptEntries();
+
+      fitStage();
+      window.addEventListener("resize", fitStage, { passive: true });
+      agentTabButtons.forEach((button) => {
+        button.addEventListener("click", () => switchAgentTab(button.dataset.agentTab));
+      });
+      agentPanelBody.addEventListener("wheel", handleAgentFeedWheel, { passive: false });
+      ignoreButton.addEventListener("click", () => {
+        dismissPrompt();
+        notifyParentStep(0);
+      });
+      recordButton.addEventListener("click", () => {
+        showRecordingIsland();
+        notifyParentStep(1);
+      });
+      pauseRecordButton.addEventListener("click", toggleRecordingPause);
+      stopRecordButton.addEventListener("click", showStopConfirmation);
+      islandScreenshotButton.addEventListener("click", () => addScreenshotTranscriptEntry({ revealPanel: false }));
+      islandModeSwitchButton.addEventListener("click", toggleIslandMode);
+      stopConfirmEndButton.addEventListener("click", cancelStopConfirmation);
+      stopConfirmContinueButton.addEventListener("click", () => {
+        stopRecording();
+        notifyParentStep(2);
+      });
+      expandRecordButton.addEventListener("click", () => {
+        toggleRecordingExpand();
+        notifyParentStep(islandMode === "subtitle" ? 4 : 1);
+      });
+      agentPlayButton.addEventListener("click", toggleRecordingPause);
+      agentStopButton.addEventListener("click", showAgentStopConfirmation);
+      agentScreenshotButton.addEventListener("click", addScreenshotTranscriptEntry);
+      agentStopLayerButtons.forEach((button) => {
+        button.addEventListener("click", () => handleAgentStopLayerAction(button.dataset.agentStopAction));
+      });
+      finalSummaryIgnoreButton.addEventListener("click", hideFinalSummaryToast);
+      finalSummaryViewButton.addEventListener("click", () => {
+        hideFinalSummaryToast();
+        setMinutesRichEditing(false);
+        stage.classList.add("figma-stage--minutes-open");
+        animatePanelIn(summarySheet, summaryCards);
+        notifyParentStep(2);
+      });
+      panelCollapseButton.addEventListener("click", closeAgentPanel);
+      subtitlePanelCloseButton.addEventListener("click", () => hideSubtitlePanel({ restoreToolbar: true }));
+      resetDemoButton.addEventListener("click", () => {
+        resetDemo();
+        notifyParentStep(0);
+      });
+      minutesRichEditButton?.addEventListener("click", openMinutesRichEditing);
+      orbVideos.forEach((video) => video.play().catch(() => {}));
+      window.setTimeout(runPromptCountdown, countdownStart);
+    </script>
+  </body>
+</html>

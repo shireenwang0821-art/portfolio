@@ -1,0 +1,51 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Group 2134281250">
+<path id="Vector" d="M0 9C0 2.45455 2.45455 0 9 0C15.5455 0 18 2.45455 18 9C18 15.5455 15.5455 18 9 18C2.45455 18 0 15.5455 0 9Z" fill="url(#paint0_linear_0_133)"/>
+<g id="Group 2090053625">
+<mask id="mask0_0_133" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="2" y="5" width="7" height="8">
+<path id="Subtract" d="M7.93352 6.63273C8.12696 6.82621 8.29163 7.03776 8.42725 7.26181C7.88992 7.70704 7.14386 7.76607 6.55038 7.43859C5.84994 7.00032 4.91599 7.08433 4.30683 7.69339C3.59852 8.4019 3.59847 9.55095 4.30683 10.2594C4.98302 10.9354 6.05927 10.9649 6.77204 10.3506C7.32856 10.1812 7.95366 10.3025 8.41067 10.7145C8.27796 10.9295 8.11996 11.1336 7.93352 11.3201C6.63925 12.6141 4.54043 12.6141 3.24617 11.3201C1.95202 10.0258 1.95208 7.92703 3.24617 6.63273C4.54046 5.33856 6.63923 5.33856 7.93352 6.63273Z" fill="var(--fill-0, black)"/>
+</mask>
+<g mask="url(#mask0_0_133)">
+<g id="Rectangle 279336075">
+<rect x="5.58984" y="4.13846" width="6.8381" height="6.8381" transform="rotate(45 5.58984 4.13846)" fill="url(#paint1_linear_0_133)"/>
+<rect x="5.58984" y="4.13846" width="6.8381" height="6.8381" transform="rotate(45 5.58984 4.13846)" fill="var(--fill-1, white)"/>
+</g>
+<path id="Ellipse 15623" opacity="0.6" d="M6.60757 11.0717C5.63344 12.0459 4.05406 12.0459 3.07993 11.0717C2.1058 10.0976 2.1058 8.51822 3.07993 7.54409C4.05406 6.56996 5.63344 6.56996 6.60757 7.54409C7.5817 8.51822 7.5817 10.0976 6.60757 11.0717Z" fill="url(#paint2_linear_0_133)"/>
+</g>
+</g>
+<g id="Group 2090053626">
+<mask id="mask1_0_133" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="9" y="5" width="7" height="8">
+<path id="Subtract_2" d="M14.7421 6.54387C14.9354 6.73715 15.0996 6.94845 15.2352 7.17225C14.6851 7.62794 13.9174 7.67892 13.3175 7.32486C12.622 6.91515 11.7127 7.00726 11.1154 7.60453C10.4071 8.31306 10.407 9.46209 11.1154 10.1706C11.7906 10.8456 12.8644 10.8754 13.5772 10.2638C14.1343 10.0943 14.7601 10.2159 15.2172 10.6291C15.0849 10.8428 14.9276 11.0458 14.7421 11.2312C13.4478 12.5253 11.349 12.5253 10.0548 11.2312C8.76051 9.93696 8.76063 7.83819 10.0548 6.54387C11.3491 5.24956 13.4478 5.24956 14.7421 6.54387Z" fill="var(--fill-0, black)"/>
+</mask>
+<g mask="url(#mask1_0_133)">
+<g id="Rectangle 279336075_2">
+<rect x="12.4023" y="4.05176" width="6.8381" height="6.8381" transform="rotate(45 12.4023 4.05176)" fill="url(#paint3_linear_0_133)"/>
+<rect x="12.4023" y="4.05176" width="6.8381" height="6.8381" transform="rotate(45 12.4023 4.05176)" fill="var(--fill-1, white)"/>
+</g>
+<path id="Ellipse 15623_2" opacity="0.6" d="M13.4162 10.9848C12.442 11.9589 10.8627 11.9589 9.88853 10.9848C8.9144 10.0107 8.9144 8.43131 9.88853 7.45718C10.8627 6.48305 12.442 6.48305 13.4162 7.45718C14.3903 8.43131 14.3903 10.0107 13.4162 10.9848Z" fill="url(#paint4_linear_0_133)"/>
+</g>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_133" x1="2.76923" y1="3" x2="15" y2="15.6923" gradientUnits="userSpaceOnUse">
+<stop stop-color="#35FF97"/>
+<stop offset="1" stop-color="#1E64FF"/>
+</linearGradient>
+<linearGradient id="paint1_linear_0_133" x1="7.3706" y1="5.91922" x2="11.1458" y2="9.69442" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1EA9FF"/>
+<stop offset="1" stop-color="#0068FA"/>
+</linearGradient>
+<linearGradient id="paint2_linear_0_133" x1="5.9248" y1="10.389" x2="4.78152" y2="7.08713" gradientUnits="userSpaceOnUse">
+<stop stop-color="#0777FB" stop-opacity="0"/>
+<stop offset="1" stop-color="#1697FE"/>
+</linearGradient>
+<linearGradient id="paint3_linear_0_133" x1="14.1831" y1="5.83251" x2="17.9583" y2="9.60771" gradientUnits="userSpaceOnUse">
+<stop stop-color="#1EA9FF"/>
+<stop offset="1" stop-color="#0068FA"/>
+</linearGradient>
+<linearGradient id="paint4_linear_0_133" x1="12.7334" y1="10.302" x2="11.5901" y2="7.00022" gradientUnits="userSpaceOnUse">
+<stop stop-color="#0777FB" stop-opacity="0"/>
+<stop offset="1" stop-color="#1697FE"/>
+</linearGradient>
+</defs>
+</svg>

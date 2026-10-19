@@ -1,0 +1,1156 @@
+{
+  "source": "cober.mp4",
+  "sourceBytes": 3578553,
+  "sourceSize": [
+    2560,
+    1440
+  ],
+  "fps": 24,
+  "frameCount": 121,
+  "duration": 5.041666667,
+  "desktopSize": [
+    2560,
+    1440
+  ],
+  "mobileSize": [
+    2560,
+    1440
+  ],
+  "sharedFrameSequence": true,
+  "frameFolder": "frames",
+  "thumbnailSize": [
+    512,
+    512
+  ],
+  "webpQuality": {
+    "desktop": 95,
+    "mobile": 95,
+    "thumbnail": 90
+  },
+  "desktopBytes": 9208088,
+  "mobileBytes": 9208088,
+  "thumbnailBytes": 2097156,
+  "sampledDesktopPsnrDb": [
+    49.84,
+    49.88,
+    49.82,
+    49.8,
+    49.82,
+    49.84,
+    49.96,
+    50.02,
+    49.93,
+    49.9,
+    49.88
+  ],
+  "sampledFacePsnrDb": [
+    46.9,
+    46.86,
+    46.89,
+    46.91,
+    46.96,
+    47.06,
+    47.34,
+    47.48,
+    47.21,
+    47.14,
+    46.94
+  ],
+  "contactSheets": [
+    "contact-000-035.jpg",
+    "contact-036-071.jpg",
+    "contact-072-107.jpg",
+    "contact-108-120.jpg"
+  ],
+  "frames": [
+    {
+      "frame": 0,
+      "file": "frame-0000.webp",
+      "desktopBytes": 84280,
+      "mobileBytes": 84280,
+      "thumbnailBytes": 19598,
+      "time": 0.0,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 1,
+      "file": "frame-0001.webp",
+      "desktopBytes": 84152,
+      "mobileBytes": 84152,
+      "thumbnailBytes": 19148,
+      "time": 0.041666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 2,
+      "file": "frame-0002.webp",
+      "desktopBytes": 84084,
+      "mobileBytes": 84084,
+      "thumbnailBytes": 19866,
+      "time": 0.083333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 3,
+      "file": "frame-0003.webp",
+      "desktopBytes": 83650,
+      "mobileBytes": 83650,
+      "thumbnailBytes": 19772,
+      "time": 0.125,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 4,
+      "file": "frame-0004.webp",
+      "desktopBytes": 87434,
+      "mobileBytes": 87434,
+      "thumbnailBytes": 19382,
+      "time": 0.166666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 5,
+      "file": "frame-0005.webp",
+      "desktopBytes": 82504,
+      "mobileBytes": 82504,
+      "thumbnailBytes": 18632,
+      "time": 0.208333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 6,
+      "file": "frame-0006.webp",
+      "desktopBytes": 81318,
+      "mobileBytes": 81318,
+      "thumbnailBytes": 19226,
+      "time": 0.25,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 7,
+      "file": "frame-0007.webp",
+      "desktopBytes": 78112,
+      "mobileBytes": 78112,
+      "thumbnailBytes": 18412,
+      "time": 0.291666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 8,
+      "file": "frame-0008.webp",
+      "desktopBytes": 78866,
+      "mobileBytes": 78866,
+      "thumbnailBytes": 18630,
+      "time": 0.333333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 9,
+      "file": "frame-0009.webp",
+      "desktopBytes": 78272,
+      "mobileBytes": 78272,
+      "thumbnailBytes": 18290,
+      "time": 0.375,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 10,
+      "file": "frame-0010.webp",
+      "desktopBytes": 75438,
+      "mobileBytes": 75438,
+      "thumbnailBytes": 17718,
+      "time": 0.416666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 11,
+      "file": "frame-0011.webp",
+      "desktopBytes": 76172,
+      "mobileBytes": 76172,
+      "thumbnailBytes": 18464,
+      "time": 0.458333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 12,
+      "file": "frame-0012.webp",
+      "desktopBytes": 75770,
+      "mobileBytes": 75770,
+      "thumbnailBytes": 18696,
+      "time": 0.5,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 13,
+      "file": "frame-0013.webp",
+      "desktopBytes": 77802,
+      "mobileBytes": 77802,
+      "thumbnailBytes": 18690,
+      "time": 0.541666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 14,
+      "file": "frame-0014.webp",
+      "desktopBytes": 75666,
+      "mobileBytes": 75666,
+      "thumbnailBytes": 18400,
+      "time": 0.583333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 15,
+      "file": "frame-0015.webp",
+      "desktopBytes": 75844,
+      "mobileBytes": 75844,
+      "thumbnailBytes": 17886,
+      "time": 0.625,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 16,
+      "file": "frame-0016.webp",
+      "desktopBytes": 77168,
+      "mobileBytes": 77168,
+      "thumbnailBytes": 18310,
+      "time": 0.666666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 17,
+      "file": "frame-0017.webp",
+      "desktopBytes": 78684,
+      "mobileBytes": 78684,
+      "thumbnailBytes": 18490,
+      "time": 0.708333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 18,
+      "file": "frame-0018.webp",
+      "desktopBytes": 76454,
+      "mobileBytes": 76454,
+      "thumbnailBytes": 18260,
+      "time": 0.75,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 19,
+      "file": "frame-0019.webp",
+      "desktopBytes": 77448,
+      "mobileBytes": 77448,
+      "thumbnailBytes": 17900,
+      "time": 0.791666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 20,
+      "file": "frame-0020.webp",
+      "desktopBytes": 78806,
+      "mobileBytes": 78806,
+      "thumbnailBytes": 18300,
+      "time": 0.833333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 21,
+      "file": "frame-0021.webp",
+      "desktopBytes": 77242,
+      "mobileBytes": 77242,
+      "thumbnailBytes": 17706,
+      "time": 0.875,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 22,
+      "file": "frame-0022.webp",
+      "desktopBytes": 77242,
+      "mobileBytes": 77242,
+      "thumbnailBytes": 17734,
+      "time": 0.916666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 23,
+      "file": "frame-0023.webp",
+      "desktopBytes": 76096,
+      "mobileBytes": 76096,
+      "thumbnailBytes": 17364,
+      "time": 0.958333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 24,
+      "file": "frame-0024.webp",
+      "desktopBytes": 78364,
+      "mobileBytes": 78364,
+      "thumbnailBytes": 17632,
+      "time": 1.0,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 25,
+      "file": "frame-0025.webp",
+      "desktopBytes": 75970,
+      "mobileBytes": 75970,
+      "thumbnailBytes": 17376,
+      "time": 1.041666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 26,
+      "file": "frame-0026.webp",
+      "desktopBytes": 76576,
+      "mobileBytes": 76576,
+      "thumbnailBytes": 17690,
+      "time": 1.083333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 27,
+      "file": "frame-0027.webp",
+      "desktopBytes": 76166,
+      "mobileBytes": 76166,
+      "thumbnailBytes": 17842,
+      "time": 1.125,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 28,
+      "file": "frame-0028.webp",
+      "desktopBytes": 74930,
+      "mobileBytes": 74930,
+      "thumbnailBytes": 17212,
+      "time": 1.166666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 29,
+      "file": "frame-0029.webp",
+      "desktopBytes": 76254,
+      "mobileBytes": 76254,
+      "thumbnailBytes": 17290,
+      "time": 1.208333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 30,
+      "file": "frame-0030.webp",
+      "desktopBytes": 76702,
+      "mobileBytes": 76702,
+      "thumbnailBytes": 17742,
+      "time": 1.25,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 31,
+      "file": "frame-0031.webp",
+      "desktopBytes": 76000,
+      "mobileBytes": 76000,
+      "thumbnailBytes": 17474,
+      "time": 1.291666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 32,
+      "file": "frame-0032.webp",
+      "desktopBytes": 74790,
+      "mobileBytes": 74790,
+      "thumbnailBytes": 17824,
+      "time": 1.333333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 33,
+      "file": "frame-0033.webp",
+      "desktopBytes": 75280,
+      "mobileBytes": 75280,
+      "thumbnailBytes": 17448,
+      "time": 1.375,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 34,
+      "file": "frame-0034.webp",
+      "desktopBytes": 76474,
+      "mobileBytes": 76474,
+      "thumbnailBytes": 17468,
+      "time": 1.416666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 35,
+      "file": "frame-0035.webp",
+      "desktopBytes": 76140,
+      "mobileBytes": 76140,
+      "thumbnailBytes": 17020,
+      "time": 1.458333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 36,
+      "file": "frame-0036.webp",
+      "desktopBytes": 77796,
+      "mobileBytes": 77796,
+      "thumbnailBytes": 17462,
+      "time": 1.5,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 37,
+      "file": "frame-0037.webp",
+      "desktopBytes": 77350,
+      "mobileBytes": 77350,
+      "thumbnailBytes": 17168,
+      "time": 1.541666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 38,
+      "file": "frame-0038.webp",
+      "desktopBytes": 77274,
+      "mobileBytes": 77274,
+      "thumbnailBytes": 17512,
+      "time": 1.583333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 39,
+      "file": "frame-0039.webp",
+      "desktopBytes": 76242,
+      "mobileBytes": 76242,
+      "thumbnailBytes": 17586,
+      "time": 1.625,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 40,
+      "file": "frame-0040.webp",
+      "desktopBytes": 75992,
+      "mobileBytes": 75992,
+      "thumbnailBytes": 17900,
+      "time": 1.666666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 41,
+      "file": "frame-0041.webp",
+      "desktopBytes": 77170,
+      "mobileBytes": 77170,
+      "thumbnailBytes": 16986,
+      "time": 1.708333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 42,
+      "file": "frame-0042.webp",
+      "desktopBytes": 76332,
+      "mobileBytes": 76332,
+      "thumbnailBytes": 17006,
+      "time": 1.75,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 43,
+      "file": "frame-0043.webp",
+      "desktopBytes": 76268,
+      "mobileBytes": 76268,
+      "thumbnailBytes": 17222,
+      "time": 1.791666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 44,
+      "file": "frame-0044.webp",
+      "desktopBytes": 75822,
+      "mobileBytes": 75822,
+      "thumbnailBytes": 17078,
+      "time": 1.833333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 45,
+      "file": "frame-0045.webp",
+      "desktopBytes": 75622,
+      "mobileBytes": 75622,
+      "thumbnailBytes": 16900,
+      "time": 1.875,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 46,
+      "file": "frame-0046.webp",
+      "desktopBytes": 76434,
+      "mobileBytes": 76434,
+      "thumbnailBytes": 17050,
+      "time": 1.916666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 47,
+      "file": "frame-0047.webp",
+      "desktopBytes": 76690,
+      "mobileBytes": 76690,
+      "thumbnailBytes": 17128,
+      "time": 1.958333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 48,
+      "file": "frame-0048.webp",
+      "desktopBytes": 76036,
+      "mobileBytes": 76036,
+      "thumbnailBytes": 17158,
+      "time": 2.0,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 49,
+      "file": "frame-0049.webp",
+      "desktopBytes": 76570,
+      "mobileBytes": 76570,
+      "thumbnailBytes": 17396,
+      "time": 2.041666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 50,
+      "file": "frame-0050.webp",
+      "desktopBytes": 77050,
+      "mobileBytes": 77050,
+      "thumbnailBytes": 17492,
+      "time": 2.083333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 51,
+      "file": "frame-0051.webp",
+      "desktopBytes": 75368,
+      "mobileBytes": 75368,
+      "thumbnailBytes": 17388,
+      "time": 2.125,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 52,
+      "file": "frame-0052.webp",
+      "desktopBytes": 75808,
+      "mobileBytes": 75808,
+      "thumbnailBytes": 17442,
+      "time": 2.166666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 53,
+      "file": "frame-0053.webp",
+      "desktopBytes": 76290,
+      "mobileBytes": 76290,
+      "thumbnailBytes": 17674,
+      "time": 2.208333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 54,
+      "file": "frame-0054.webp",
+      "desktopBytes": 75624,
+      "mobileBytes": 75624,
+      "thumbnailBytes": 17368,
+      "time": 2.25,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 55,
+      "file": "frame-0055.webp",
+      "desktopBytes": 74968,
+      "mobileBytes": 74968,
+      "thumbnailBytes": 16910,
+      "time": 2.291666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 56,
+      "file": "frame-0056.webp",
+      "desktopBytes": 75504,
+      "mobileBytes": 75504,
+      "thumbnailBytes": 17468,
+      "time": 2.333333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 57,
+      "file": "frame-0057.webp",
+      "desktopBytes": 75668,
+      "mobileBytes": 75668,
+      "thumbnailBytes": 17136,
+      "time": 2.375,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 58,
+      "file": "frame-0058.webp",
+      "desktopBytes": 75448,
+      "mobileBytes": 75448,
+      "thumbnailBytes": 17026,
+      "time": 2.416666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 59,
+      "file": "frame-0059.webp",
+      "desktopBytes": 77330,
+      "mobileBytes": 77330,
+      "thumbnailBytes": 17546,
+      "time": 2.458333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 60,
+      "file": "frame-0060.webp",
+      "desktopBytes": 75984,
+      "mobileBytes": 75984,
+      "thumbnailBytes": 17734,
+      "time": 2.5,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 61,
+      "file": "frame-0061.webp",
+      "desktopBytes": 75222,
+      "mobileBytes": 75222,
+      "thumbnailBytes": 17338,
+      "time": 2.541666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 62,
+      "file": "frame-0062.webp",
+      "desktopBytes": 75718,
+      "mobileBytes": 75718,
+      "thumbnailBytes": 17488,
+      "time": 2.583333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 63,
+      "file": "frame-0063.webp",
+      "desktopBytes": 76056,
+      "mobileBytes": 76056,
+      "thumbnailBytes": 16924,
+      "time": 2.625,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 64,
+      "file": "frame-0064.webp",
+      "desktopBytes": 74230,
+      "mobileBytes": 74230,
+      "thumbnailBytes": 16884,
+      "time": 2.666666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 65,
+      "file": "frame-0065.webp",
+      "desktopBytes": 74018,
+      "mobileBytes": 74018,
+      "thumbnailBytes": 16472,
+      "time": 2.708333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 66,
+      "file": "frame-0066.webp",
+      "desktopBytes": 73670,
+      "mobileBytes": 73670,
+      "thumbnailBytes": 16592,
+      "time": 2.75,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 67,
+      "file": "frame-0067.webp",
+      "desktopBytes": 73800,
+      "mobileBytes": 73800,
+      "thumbnailBytes": 16348,
+      "time": 2.791666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 68,
+      "file": "frame-0068.webp",
+      "desktopBytes": 74950,
+      "mobileBytes": 74950,
+      "thumbnailBytes": 16648,
+      "time": 2.833333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 69,
+      "file": "frame-0069.webp",
+      "desktopBytes": 73096,
+      "mobileBytes": 73096,
+      "thumbnailBytes": 16218,
+      "time": 2.875,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 70,
+      "file": "frame-0070.webp",
+      "desktopBytes": 73588,
+      "mobileBytes": 73588,
+      "thumbnailBytes": 16476,
+      "time": 2.916666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 71,
+      "file": "frame-0071.webp",
+      "desktopBytes": 73368,
+      "mobileBytes": 73368,
+      "thumbnailBytes": 16242,
+      "time": 2.958333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 72,
+      "file": "frame-0072.webp",
+      "desktopBytes": 75366,
+      "mobileBytes": 75366,
+      "thumbnailBytes": 16576,
+      "time": 3.0,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 73,
+      "file": "frame-0073.webp",
+      "desktopBytes": 73124,
+      "mobileBytes": 73124,
+      "thumbnailBytes": 16236,
+      "time": 3.041666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 74,
+      "file": "frame-0074.webp",
+      "desktopBytes": 72758,
+      "mobileBytes": 72758,
+      "thumbnailBytes": 16140,
+      "time": 3.083333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 75,
+      "file": "frame-0075.webp",
+      "desktopBytes": 72782,
+      "mobileBytes": 72782,
+      "thumbnailBytes": 15996,
+      "time": 3.125,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 76,
+      "file": "frame-0076.webp",
+      "desktopBytes": 74196,
+      "mobileBytes": 74196,
+      "thumbnailBytes": 16808,
+      "time": 3.166666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 77,
+      "file": "frame-0077.webp",
+      "desktopBytes": 71808,
+      "mobileBytes": 71808,
+      "thumbnailBytes": 15710,
+      "time": 3.208333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 78,
+      "file": "frame-0078.webp",
+      "desktopBytes": 72384,
+      "mobileBytes": 72384,
+      "thumbnailBytes": 15742,
+      "time": 3.25,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 79,
+      "file": "frame-0079.webp",
+      "desktopBytes": 71314,
+      "mobileBytes": 71314,
+      "thumbnailBytes": 15874,
+      "time": 3.291666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 80,
+      "file": "frame-0080.webp",
+      "desktopBytes": 72776,
+      "mobileBytes": 72776,
+      "thumbnailBytes": 16206,
+      "time": 3.333333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 81,
+      "file": "frame-0081.webp",
+      "desktopBytes": 71686,
+      "mobileBytes": 71686,
+      "thumbnailBytes": 15830,
+      "time": 3.375,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 82,
+      "file": "frame-0082.webp",
+      "desktopBytes": 72054,
+      "mobileBytes": 72054,
+      "thumbnailBytes": 16190,
+      "time": 3.416666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 83,
+      "file": "frame-0083.webp",
+      "desktopBytes": 72592,
+      "mobileBytes": 72592,
+      "thumbnailBytes": 15652,
+      "time": 3.458333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 84,
+      "file": "frame-0084.webp",
+      "desktopBytes": 74640,
+      "mobileBytes": 74640,
+      "thumbnailBytes": 16242,
+      "time": 3.5,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 85,
+      "file": "frame-0085.webp",
+      "desktopBytes": 72158,
+      "mobileBytes": 72158,
+      "thumbnailBytes": 15822,
+      "time": 3.541666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 86,
+      "file": "frame-0086.webp",
+      "desktopBytes": 73862,
+      "mobileBytes": 73862,
+      "thumbnailBytes": 16170,
+      "time": 3.583333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 87,
+      "file": "frame-0087.webp",
+      "desktopBytes": 73188,
+      "mobileBytes": 73188,
+      "thumbnailBytes": 16118,
+      "time": 3.625,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 88,
+      "file": "frame-0088.webp",
+      "desktopBytes": 75308,
+      "mobileBytes": 75308,
+      "thumbnailBytes": 16890,
+      "time": 3.666666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 89,
+      "file": "frame-0089.webp",
+      "desktopBytes": 75992,
+      "mobileBytes": 75992,
+      "thumbnailBytes": 16548,
+      "time": 3.708333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 90,
+      "file": "frame-0090.webp",
+      "desktopBytes": 74156,
+      "mobileBytes": 74156,
+      "thumbnailBytes": 16562,
+      "time": 3.75,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 91,
+      "file": "frame-0091.webp",
+      "desktopBytes": 73614,
+      "mobileBytes": 73614,
+      "thumbnailBytes": 16308,
+      "time": 3.791666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 92,
+      "file": "frame-0092.webp",
+      "desktopBytes": 74204,
+      "mobileBytes": 74204,
+      "thumbnailBytes": 16948,
+      "time": 3.833333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 93,
+      "file": "frame-0093.webp",
+      "desktopBytes": 73348,
+      "mobileBytes": 73348,
+      "thumbnailBytes": 16596,
+      "time": 3.875,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 94,
+      "file": "frame-0094.webp",
+      "desktopBytes": 74452,
+      "mobileBytes": 74452,
+      "thumbnailBytes": 16808,
+      "time": 3.916666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 95,
+      "file": "frame-0095.webp",
+      "desktopBytes": 73274,
+      "mobileBytes": 73274,
+      "thumbnailBytes": 16512,
+      "time": 3.958333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 96,
+      "file": "frame-0096.webp",
+      "desktopBytes": 74416,
+      "mobileBytes": 74416,
+      "thumbnailBytes": 16884,
+      "time": 4.0,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 97,
+      "file": "frame-0097.webp",
+      "desktopBytes": 72882,
+      "mobileBytes": 72882,
+      "thumbnailBytes": 16498,
+      "time": 4.041666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 98,
+      "file": "frame-0098.webp",
+      "desktopBytes": 73590,
+      "mobileBytes": 73590,
+      "thumbnailBytes": 16174,
+      "time": 4.083333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 99,
+      "file": "frame-0099.webp",
+      "desktopBytes": 73688,
+      "mobileBytes": 73688,
+      "thumbnailBytes": 16062,
+      "time": 4.125,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 100,
+      "file": "frame-0100.webp",
+      "desktopBytes": 75060,
+      "mobileBytes": 75060,
+      "thumbnailBytes": 16588,
+      "time": 4.166666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 101,
+      "file": "frame-0101.webp",
+      "desktopBytes": 72878,
+      "mobileBytes": 72878,
+      "thumbnailBytes": 16282,
+      "time": 4.208333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 102,
+      "file": "frame-0102.webp",
+      "desktopBytes": 74120,
+      "mobileBytes": 74120,
+      "thumbnailBytes": 16278,
+      "time": 4.25,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 103,
+      "file": "frame-0103.webp",
+      "desktopBytes": 73724,
+      "mobileBytes": 73724,
+      "thumbnailBytes": 16382,
+      "time": 4.291666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 104,
+      "file": "frame-0104.webp",
+      "desktopBytes": 76138,
+      "mobileBytes": 76138,
+      "thumbnailBytes": 16606,
+      "time": 4.333333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 105,
+      "file": "frame-0105.webp",
+      "desktopBytes": 74724,
+      "mobileBytes": 74724,
+      "thumbnailBytes": 16324,
+      "time": 4.375,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 106,
+      "file": "frame-0106.webp",
+      "desktopBytes": 74974,
+      "mobileBytes": 74974,
+      "thumbnailBytes": 16938,
+      "time": 4.416666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 107,
+      "file": "frame-0107.webp",
+      "desktopBytes": 75424,
+      "mobileBytes": 75424,
+      "thumbnailBytes": 17476,
+      "time": 4.458333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 108,
+      "file": "frame-0108.webp",
+      "desktopBytes": 75922,
+      "mobileBytes": 75922,
+      "thumbnailBytes": 17018,
+      "time": 4.5,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 109,
+      "file": "frame-0109.webp",
+      "desktopBytes": 78114,
+      "mobileBytes": 78114,
+      "thumbnailBytes": 17566,
+      "time": 4.541666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 110,
+      "file": "frame-0110.webp",
+      "desktopBytes": 76138,
+      "mobileBytes": 76138,
+      "thumbnailBytes": 18040,
+      "time": 4.583333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 111,
+      "file": "frame-0111.webp",
+      "desktopBytes": 77858,
+      "mobileBytes": 77858,
+      "thumbnailBytes": 18040,
+      "time": 4.625,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 112,
+      "file": "frame-0112.webp",
+      "desktopBytes": 76960,
+      "mobileBytes": 76960,
+      "thumbnailBytes": 17692,
+      "time": 4.666666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 113,
+      "file": "frame-0113.webp",
+      "desktopBytes": 78138,
+      "mobileBytes": 78138,
+      "thumbnailBytes": 18040,
+      "time": 4.708333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 114,
+      "file": "frame-0114.webp",
+      "desktopBytes": 77796,
+      "mobileBytes": 77796,
+      "thumbnailBytes": 18266,
+      "time": 4.75,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 115,
+      "file": "frame-0115.webp",
+      "desktopBytes": 77914,
+      "mobileBytes": 77914,
+      "thumbnailBytes": 18480,
+      "time": 4.791666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 116,
+      "file": "frame-0116.webp",
+      "desktopBytes": 79510,
+      "mobileBytes": 79510,
+      "thumbnailBytes": 18634,
+      "time": 4.833333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 117,
+      "file": "frame-0117.webp",
+      "desktopBytes": 78946,
+      "mobileBytes": 78946,
+      "thumbnailBytes": 18720,
+      "time": 4.875,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 118,
+      "file": "frame-0118.webp",
+      "desktopBytes": 80390,
+      "mobileBytes": 80390,
+      "thumbnailBytes": 18582,
+      "time": 4.916666667,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 119,
+      "file": "frame-0119.webp",
+      "desktopBytes": 80826,
+      "mobileBytes": 80826,
+      "thumbnailBytes": 18788,
+      "time": 4.958333333,
+      "duration": 0.041666667
+    },
+    {
+      "frame": 120,
+      "file": "frame-0120.webp",
+      "desktopBytes": 80416,
+      "mobileBytes": 80416,
+      "thumbnailBytes": 19056,
+      "time": 5.0,
+      "duration": 0.041666667
+    }
+  ]
+}
